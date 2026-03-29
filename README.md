@@ -48,8 +48,8 @@ pip install -e .
 # 1. Generate a keypair for your DID
 fair-data-access keygen -d ~/.fair-data-access/
 
-# 2. Create a DID document (serve at your domain)
-fair-data-access did-doc did:web:fair2adapt.eu public_key.pem
+# 2. Create a DID document (served via GitHub Pages)
+fair-data-access did-doc did:web:fair2adapt.github.io:fair-data-access public_key.pem
 
 # 3. Create an ODRL policy
 fair-data-access policy \
@@ -66,8 +66,18 @@ fair-data-access encrypt buildings.gpkg --save-key dataset_key.txt
 
 # 5. Upload encrypted data to Zenodo/S3
 # 6. Store dataset_key.txt content as a GitHub Secret (KEY_HAMBURG_BUILDINGS)
-# 7. Publish ODRL policy as nanopub (updates registry.json with nanopub URI)
+# 7. Publish ODRL policy as nanopub via Nanodash template (see below)
+# 8. Update policies/registry.json with the nanopub URI
 ```
+
+### Publishing ODRL policies via Nanodash
+
+Policies should be created via the Nanodash template forms to ensure compatibility:
+
+- **Policy template**: [Create ODRL Access Policy](https://nanodash.knowledgepixels.com/publish?template=https://w3id.org/np/RA61D4c7dB5t0B1mLhc78bN2vagqYTXQiJDKY0yImRULI)
+- **Grant template**: [Create ODRL Access Grant](https://nanodash.knowledgepixels.com/publish?template=https://w3id.org/np/RAeRMv6jOibLPIYBMOGu_FsX6NQ6B59KJCgCFkue4z7Ac)
+
+The `nanopubs/` directory also contains notebooks for programmatic template creation and retraction.
 
 ### Data consumer workflow
 
@@ -109,6 +119,11 @@ fair-data-access/
     rocrate.py          # RO-Crate integration for encrypted data
     cli.py              # Command-line interface
   scripts/              # GitHub Actions helper scripts
+  nanopubs/
+    config/             # JSON configs for policy nanopubs
+    create_odrl_template_v2.ipynb  # GroupedStatement assertion templates
+    create_odrl_policy_nanopub.ipynb  # Programmatic policy generation
+    disapprove_nanopub.ipynb  # Retract/disapprove nanopubs
   policies/             # ODRL policy files and registry
   .github/
     workflows/          # Automated access request processing
