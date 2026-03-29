@@ -1,0 +1,27 @@
+version: 1
+project:
+  id: fair-data-access-docs
+  title: FAIR2Adapt Data Access
+  description: ODRL-based access control for FAIR climate adaptation data
+  github: https://github.com/FAIR2Adapt/fair-data-access
+  keywords:
+    - ODRL
+    - FAIR data
+    - nanopublications
+    - access control
+    - climate adaptation
+  authors:
+    - name:
+        literal: FAIR2Adapt
+      url: https://fair2adapt-eosc.eu
+  toc:
+    - file: index.md
+    - file: tutorial-provider.md
+    - file: tutorial-consumer.md
+    - file: architecture.md
+site:
+  template: book-theme
+  options:
+    favicon: https://fair2adapt-eosc.eu/wp-content/uploads/2025/04/favicon.jpg
+    logo: https://fair2adapt-eosc.eu/wp-content/uploads/2025/02/FAIR2Adapt_logo-1024x183.png
+    logo_dark: https://fair2adapt-eosc.eu/wp-content/uploads/2025/02/FAIR2Adapt_White-1024x183.png

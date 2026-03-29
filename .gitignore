@@ -9,3 +9,4 @@ build/
 private_key.*
 dataset_key.*
 docs/keys/
+docs/_build/
