@@ -18,6 +18,11 @@ project:
     - file: index.md
     - file: tutorial-provider.md
     - file: tutorial-consumer.md
+    - title: ODRL Nanopublications
+      children:
+        - file: ../nanopubs/create_odrl_template.ipynb
+        - file: ../nanopubs/create_odrl_policy_nanopub.ipynb
+        - file: ../nanopubs/create_access_grant_nanopub.ipynb
     - file: architecture.md
 site:
   template: book-theme
