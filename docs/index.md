@@ -13,27 +13,21 @@ This tool is designed for data that is **private but not sensitive** — data th
 
 ## How it works
 
-```{mermaid}
-%%{init: {'theme': 'base', 'themeVariables': {'fontSize': '16px', 'fontFamily': 'Quicksand'}, 'flowchart': {'nodeSpacing': 30, 'rankSpacing': 40, 'padding': 15}}}%%
-
-flowchart LR
-    subgraph P["<b>1. Data Provider</b>"]
-        direction TB
-        A["Encrypt data\n(AES-256-GCM)"] --> B["Publish ODRL policy\n(nanopublication)"] --> C["Upload to\nZenodo / S3 Pangeo"]
-    end
-
-    subgraph G["<b>2. GitHub Actions</b>"]
-        direction TB
-        D["Researcher requests\naccess (GitHub Issue)"] --> E["Resolve DID +\nevaluate ODRL policy"] --> F["Wrap key +\npublish access grant"]
-    end
-
-    subgraph R["<b>3. Data Consumer</b>"]
-        direction TB
-        H["Download wrapped key\n(GitHub Pages)"] --> I["Decrypt with\nDID private key"] --> J["Run analysis"]
-    end
-
-    C --> D
-    F --> H
+```text
+ ┌─────────────────────┐      ┌─────────────────────┐      ┌─────────────────────┐
+ │   DATA PROVIDER     │      │   GITHUB ACTIONS     │      │   DATA CONSUMER     │
+ │                     │      │                      │      │                     │
+ │  1. Encrypt data    │      │  4. Resolve DID      │      │  7. Download        │
+ │     (AES-256-GCM)   │      │     & verify         │      │     wrapped key     │
+ │                     │      │     identity          │      │     (GitHub Pages)  │
+ │  2. Publish ODRL    │      │                      │      │                     │
+ │     policy as       │──▶   │  5. Evaluate ODRL    │──▶   │  8. Decrypt with    │
+ │     nanopublication │      │     policy            │      │     DID private key │
+ │                     │      │                      │      │                     │
+ │  3. Upload to       │      │  6. Wrap key &       │      │  9. Run analysis    │
+ │     Zenodo / S3     │      │     publish access   │      │     (urban_pfr)     │
+ │     Pangeo@EOSC     │      │     grant nanopub    │      │                     │
+ └─────────────────────┘      └──────────────────────┘      └─────────────────────┘
 ```
 
 ## Quick start
