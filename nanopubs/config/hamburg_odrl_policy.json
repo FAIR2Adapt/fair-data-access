@@ -1,0 +1,100 @@
+{
+  "metadata": {
+    "creator_orcid": "0000-0002-1784-2920",
+    "creator_name": "Anne Fouilloux",
+    "project": {
+      "uri": "https://fair2adapt-eosc.eu",
+      "label": "FAIR2Adapt"
+    }
+  },
+  "nanopublications": [
+    {
+      "id": "odrl_hamburg_buildings",
+      "policy_uid": "https://fair2adapt.eu/policy/hamburg-buildings",
+      "policy_type": "Offer",
+      "target": {
+        "uri": "https://fair2adapt.eu/data/hamburg-buildings",
+        "label": "Hamburg building footprints with demographic indicators"
+      },
+      "permissions": [
+        {
+          "actions": ["use", "reproduce"],
+          "purpose": "AcademicResearch"
+        }
+      ],
+      "prohibitions": [
+        {
+          "actions": ["distribute", "commercialize"]
+        }
+      ],
+      "duties": [
+        {
+          "action": "attribute",
+          "attributed_party": {
+            "uri": "https://fair2adapt-eosc.eu",
+            "label": "FAIR2Adapt"
+          }
+        }
+      ],
+      "related_dataset_doi": "10.5281/zenodo.XXXXX"
+    },
+    {
+      "id": "odrl_hamburg_statistical_units",
+      "policy_uid": "https://fair2adapt.eu/policy/hamburg-statistical-units",
+      "policy_type": "Offer",
+      "target": {
+        "uri": "https://fair2adapt.eu/data/hamburg-statistical-units",
+        "label": "Hamburg statistical units with social vulnerability indicators"
+      },
+      "permissions": [
+        {
+          "actions": ["use", "reproduce"],
+          "purpose": "AcademicResearch"
+        }
+      ],
+      "prohibitions": [
+        {
+          "actions": ["distribute", "commercialize"]
+        }
+      ],
+      "duties": [
+        {
+          "action": "attribute",
+          "attributed_party": {
+            "uri": "https://fair2adapt-eosc.eu",
+            "label": "FAIR2Adapt"
+          }
+        }
+      ]
+    },
+    {
+      "id": "odrl_hamburg_risk_private",
+      "policy_uid": "https://fair2adapt.eu/policy/hamburg-risk-private",
+      "policy_type": "Offer",
+      "target": {
+        "uri": "https://fair2adapt.eu/data/hamburg-risk-private",
+        "label": "Hamburg building-level pluvial flood risk outputs (PFRMA, PFRWB)"
+      },
+      "permissions": [
+        {
+          "actions": ["use", "reproduce"],
+          "purpose": "AcademicResearch"
+        }
+      ],
+      "prohibitions": [
+        {
+          "actions": ["distribute", "commercialize"]
+        }
+      ],
+      "duties": [
+        {
+          "action": "attribute",
+          "attributed_party": {
+            "uri": "https://fair2adapt-eosc.eu",
+            "label": "FAIR2Adapt"
+          }
+        }
+      ]
+    }
+  ]
+}

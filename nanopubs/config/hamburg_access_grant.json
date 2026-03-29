@@ -1,0 +1,26 @@
+{
+  "metadata": {
+    "creator_orcid": "0000-0002-1784-2920",
+    "creator_name": "Anne Fouilloux",
+    "project": {
+      "uri": "https://fair2adapt-eosc.eu",
+      "label": "FAIR2Adapt"
+    }
+  },
+  "nanopublications": [
+    {
+      "id": "grant_hamburg_buildings_example",
+      "target": {
+        "uri": "https://fair2adapt.eu/data/hamburg-buildings",
+        "label": "Hamburg building footprints with demographic indicators"
+      },
+      "assignee": {
+        "did": "did:web:researcher.example.org",
+        "label": "Example Researcher"
+      },
+      "granted_actions": ["use", "reproduce"],
+      "under_policy": "https://w3id.org/np/RA-hamburg-buildings-policy-PLACEHOLDER",
+      "workflow_run": "https://github.com/FAIR2Adapt/fair-data-access/actions/runs/12345"
+    }
+  ]
+}
