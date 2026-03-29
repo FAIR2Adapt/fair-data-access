@@ -13,22 +13,7 @@ This tool is designed for data that is **private but not sensitive** — data th
 
 ## How it works
 
-```text
- ┌─────────────────────┐      ┌─────────────────────┐      ┌─────────────────────┐
- │   DATA PROVIDER     │      │   GITHUB ACTIONS     │      │   DATA CONSUMER     │
- │                     │      │                      │      │                     │
- │  1. Encrypt data    │      │  4. Resolve DID      │      │  7. Download        │
- │     (AES-256-GCM)   │      │     & verify         │      │     wrapped key     │
- │                     │      │     identity          │      │     (GitHub Pages)  │
- │  2. Publish ODRL    │      │                      │      │                     │
- │     policy as       │──▶   │  5. Evaluate ODRL    │──▶   │  8. Decrypt with    │
- │     nanopublication │      │     policy            │      │     DID private key │
- │                     │      │                      │      │                     │
- │  3. Upload to       │      │  6. Wrap key &       │      │  9. Run analysis    │
- │     Zenodo / S3     │      │     publish access   │      │     (urban_pfr)     │
- │     Pangeo@EOSC     │      │     grant nanopub    │      │                     │
- └─────────────────────┘      └──────────────────────┘      └─────────────────────┘
-```
+![How it works: Data Provider encrypts and publishes, GitHub Actions evaluates ODRL policy and wraps key, Data Consumer decrypts and runs analysis](images/how-it-works.svg)
 
 ## Quick start
 
