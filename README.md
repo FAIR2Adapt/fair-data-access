@@ -57,7 +57,7 @@ fair-data-access policy \
   --target "https://fair2adapt.eu/data/hamburg-buildings" \
   --permit-actions use reproduce \
   --prohibit-actions distribute commercialize \
-  --purpose AcademicResearch \
+  --purpose https://w3id.org/dpv#AcademicResearch \
   --require-attribution \
   -o policies/hamburg-buildings.jsonld
 

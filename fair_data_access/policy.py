@@ -213,9 +213,10 @@ def evaluate_policy(
             operator = constraint.get("operator", "")
             right = constraint.get("rightOperand", "")
 
-            if left == "purpose" or left == "odrl:purpose":
+            if left in ("purpose", "odrl:purpose", "http://www.w3.org/ns/odrl/2/purpose"):
                 if operator in ("eq", "odrl:eq"):
-                    if purpose != right:
+                    # Compare purpose value or DPV URI
+                    if purpose != right and f"https://w3id.org/dpv#{purpose}" != right:
                         all_satisfied = False
                         break
             elif context and left in context:

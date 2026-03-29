@@ -37,9 +37,10 @@ body:
       label: Purpose
       description: How will you use the data?
       options:
-        - AcademicResearch
-        - ClimateAdaptation
-        - GovernmentPlanning
+        - Academic Research (https://w3id.org/dpv#AcademicResearch)
+        - Scientific Research (https://w3id.org/dpv#ScientificResearch)
+        - Non-Commercial Research (https://w3id.org/dpv#NonCommercialResearch)
+        - Public Benefit (https://w3id.org/dpv#PublicBenefit)
         - Other
     validations:
       required: true

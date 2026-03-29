@@ -79,7 +79,7 @@ print(json.dumps(policy, indent=2))
 
 This tells you:
 - **Permitted actions**: e.g., `use`, `reproduce`
-- **Constraints**: e.g., `purpose = AcademicResearch`
+- **Constraints**: e.g., `purpose = https://w3id.org/dpv#AcademicResearch`
 - **Prohibitions**: e.g., `distribute`, `commercialize`
 - **Duties**: e.g., `attribute` (you must cite the data provider)
 
@@ -91,7 +91,7 @@ Open an [access request issue](https://github.com/FAIR2Adapt/fair-data-access/is
 |-------|---------|
 | Dataset ID | `hamburg-buildings` |
 | Your DID | `did:web:myuniversity.edu:researcher` |
-| Purpose | AcademicResearch |
+| Purpose | https://w3id.org/dpv#AcademicResearch |
 | Affiliation | University of Oslo |
 | Justification | Validating flood risk model for coastal cities... |
 
@@ -199,7 +199,7 @@ gdf = gpd.read_file(io.BytesIO(data_bytes))
 
 If your request is denied, the GitHub issue comment will explain why. Common reasons:
 
-- **Purpose mismatch**: Your stated purpose doesn't match the policy constraint (e.g., you said "Other" but the policy requires "AcademicResearch")
+- **Purpose mismatch**: Your stated purpose doesn't match the policy constraint (e.g., you said "Other" but the policy requires "https://w3id.org/dpv#AcademicResearch")
 - **DID not resolvable**: Your `did.json` is not accessible at the expected URL
 - **Dataset not found**: The dataset ID doesn't exist in the policy registry
 

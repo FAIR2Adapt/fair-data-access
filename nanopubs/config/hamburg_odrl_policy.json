@@ -19,7 +19,7 @@
       "permissions": [
         {
           "actions": ["use", "reproduce"],
-          "purpose": "AcademicResearch"
+          "purpose": "https://w3id.org/dpv#AcademicResearch"
         }
       ],
       "prohibitions": [
@@ -49,7 +49,7 @@
       "permissions": [
         {
           "actions": ["use", "reproduce"],
-          "purpose": "AcademicResearch"
+          "purpose": "https://w3id.org/dpv#AcademicResearch"
         }
       ],
       "prohibitions": [
@@ -78,7 +78,7 @@
       "permissions": [
         {
           "actions": ["use", "reproduce"],
-          "purpose": "AcademicResearch"
+          "purpose": "https://w3id.org/dpv#AcademicResearch"
         }
       ],
       "prohibitions": [

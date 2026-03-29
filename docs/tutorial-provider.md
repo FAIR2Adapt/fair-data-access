@@ -110,7 +110,7 @@ The [ODRL](https://www.w3.org/TR/odrl-model/) policy defines who can do what wit
 
 | Pattern | Permissions | Prohibitions |
 |---------|-------------|-------------|
-| Academic only | use, reproduce (purpose = AcademicResearch) | distribute, commercialize |
+| Academic only | use, reproduce (purpose = https://w3id.org/dpv#AcademicResearch) | distribute, commercialize |
 | Consortium only | use, reproduce, distribute (assignee = consortium) | commercialize |
 | Government planning | use (purpose = GovernmentPlanning) | distribute, commercialize |
 
@@ -122,7 +122,7 @@ fair-data-access policy \
   --target "https://fair2adapt.eu/data/hamburg-buildings" \
   --permit-actions use reproduce \
   --prohibit-actions distribute commercialize \
-  --purpose AcademicResearch \
+  --purpose https://w3id.org/dpv#AcademicResearch \
   --require-attribution \
   -o policies/hamburg-buildings.jsonld
 ```
@@ -142,7 +142,7 @@ This generates:
     "constraint": [{
       "leftOperand": "purpose",
       "operator": "eq",
-      "rightOperand": "AcademicResearch"
+      "rightOperand": "https://w3id.org/dpv#AcademicResearch"
     }],
     "duty": [{ "action": "attribute" }]
   }],

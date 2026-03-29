@@ -11,7 +11,7 @@
         {
           "leftOperand": "purpose",
           "operator": "eq",
-          "rightOperand": "AcademicResearch"
+          "rightOperand": "https://w3id.org/dpv#AcademicResearch"
         }
       ],
       "duty": [
