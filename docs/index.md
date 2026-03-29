@@ -14,25 +14,38 @@ This tool is designed for data that is **private but not sensitive** — data th
 ## How it works
 
 ```{mermaid}
-flowchart LR
-    subgraph Provider
-        A[Encrypt data] --> B[Publish ODRL policy\nas nanopub]
-        B --> C[Upload encrypted data\nto Zenodo / S3]
-        C --> D[Store key as\nGitHub Secret]
+flowchart TD
+    subgraph "<b>1. Data Provider</b>"
+        A["🔒 Encrypt data<br/>(AES-256-GCM)"]
+        B["📜 Publish ODRL policy<br/>(nanopublication)"]
+        C["☁️ Upload encrypted data<br/>(Zenodo / S3 Pangeo)"]
+        A --> B --> C
     end
 
-    subgraph GitHub Actions
-        E[Resolve DID] --> F[Evaluate\nODRL policy]
-        F --> G[Wrap key for\nrequester]
-        G --> H[Publish access\ngrant nanopub]
+    subgraph "<b>2. Access Request</b>"
+        D["📝 Researcher opens<br/>GitHub Issue with DID"]
+        E["🔍 Resolve DID<br/>→ get public key"]
+        F["⚖️ Evaluate<br/>ODRL policy"]
+        D --> E --> F
     end
 
-    subgraph Consumer
-        I[Request access\nvia GitHub Issue] --> E
-        H --> J[Download\nwrapped key]
-        J --> K[Decrypt data]
-        K --> L[Run analysis]
+    subgraph "<b>3. Key Distribution</b>"
+        G["🔑 Wrap dataset key<br/>with requester's public key"]
+        H["📋 Publish access grant<br/>(nanopub audit trail)"]
+        I["🌐 Serve wrapped key<br/>(GitHub Pages)"]
+        G --> H --> I
     end
+
+    subgraph "<b>4. Data Consumer</b>"
+        J["⬇️ Download<br/>encrypted data + key"]
+        K["🔓 Decrypt with<br/>DID private key"]
+        L["🗺️ Run analysis"]
+        J --> K --> L
+    end
+
+    C --> D
+    F --> G
+    I --> J
 ```
 
 ## Quick start
