@@ -36,7 +36,7 @@
           }
         }
       ],
-      "related_dataset_doi": "10.5281/zenodo.XXXXX"
+      "supersedes": "https://w3id.org/np/RAgtBCd3TIGKD1LEQfS5fv_4bXLNz_eMZJejX9KEsYp4M"
     },
     {
       "id": "odrl_hamburg_statistical_units",
@@ -65,7 +65,8 @@
             "label": "FAIR2Adapt"
           }
         }
-      ]
+      ],
+      "supersedes": "https://w3id.org/np/RALo7B8U_DNz1HdPK6PiCtYwx5SYs8UASxW-NMqTcV1W4"
     },
     {
       "id": "odrl_hamburg_risk_private",
@@ -94,7 +95,8 @@
             "label": "FAIR2Adapt"
           }
         }
-      ]
+      ],
+      "supersedes": "https://w3id.org/np/RArCQ-dNmxe7Fxgk6H2VnPBV4EGNV31Q6QrUpTNh_A3tg"
     }
   ]
 }

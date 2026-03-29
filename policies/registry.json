@@ -2,7 +2,7 @@
   "hamburg-buildings": {
     "description": "Hamburg building footprints with demographic indicators",
     "policy_file": "hamburg-buildings.jsonld",
-    "policy_nanopub": null,
+    "policy_nanopub": "https://w3id.org/np/RAir7keZs8Jy7i8HvRI7X4SmefJtY3jG2WgyFlsZa9-iw",
     "encrypted_files": [
       "buildings.fgb.enc"
     ],

@@ -10,3 +10,5 @@ private_key.*
 dataset_key.*
 docs/keys/
 docs/_build/
+.ipynb_checkpoints/
+nanopubs/output/
