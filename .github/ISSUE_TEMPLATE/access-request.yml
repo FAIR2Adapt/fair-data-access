@@ -1,0 +1,63 @@
+name: Data Access Request
+description: Request access to an encrypted FAIR2Adapt dataset
+title: "Access request: [dataset name]"
+labels: ["access-request"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Data Access Request
+
+        Fill in the form below to request access to an encrypted dataset.
+        Your request will be automatically evaluated against the dataset's
+        ODRL policy. If approved, a wrapped decryption key will be generated
+        for your DID.
+
+  - type: input
+    id: dataset
+    attributes:
+      label: Dataset ID
+      description: The dataset you want to access
+      placeholder: "e.g., hamburg-buildings"
+    validations:
+      required: true
+
+  - type: input
+    id: did
+    attributes:
+      label: Your DID
+      description: "Your Decentralized Identifier (did:web:...)"
+      placeholder: "did:web:example.org:researcher"
+    validations:
+      required: true
+
+  - type: dropdown
+    id: purpose
+    attributes:
+      label: Purpose
+      description: How will you use the data?
+      options:
+        - AcademicResearch
+        - ClimateAdaptation
+        - GovernmentPlanning
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: affiliation
+    attributes:
+      label: Affiliation
+      description: Your organization
+      placeholder: "e.g., University of Oslo"
+    validations:
+      required: true
+
+  - type: textarea
+    id: justification
+    attributes:
+      label: Justification
+      description: Brief description of your intended use
+      placeholder: "We are studying flood risk in coastal cities and need building-level data for model validation..."
+    validations:
+      required: true

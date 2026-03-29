@@ -1,0 +1,25 @@
+{
+  "@context": "http://www.w3.org/ns/odrl.jsonld",
+  "@type": "Offer",
+  "uid": "https://fair2adapt.eu/policy/hamburg-buildings-consortium",
+  "profile": "http://www.w3.org/ns/odrl/2/core",
+  "permission": [
+    {
+      "target": "https://fair2adapt.eu/data/hamburg-buildings",
+      "action": ["use", "reproduce", "distribute"],
+      "assignee": "https://fair2adapt.eu/consortium",
+      "duty": [
+        {
+          "action": "attribute",
+          "target": "https://fair2adapt.eu/"
+        }
+      ]
+    }
+  ],
+  "prohibition": [
+    {
+      "target": "https://fair2adapt.eu/data/hamburg-buildings",
+      "action": "http://www.w3.org/ns/odrl/2/commercialize"
+    }
+  ]
+}
