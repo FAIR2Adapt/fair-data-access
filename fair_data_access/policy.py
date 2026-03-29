@@ -139,40 +139,131 @@ def fetch_policy(nanopub_uri: str) -> dict:
     Resolves the nanopub, extracts the assertion graph,
     and returns the ODRL policy as a dict.
     """
-    # Nanopub URIs resolve to RDF; fetch as JSON-LD
+    from rdflib import Dataset
+
+    # Fetch as TriG (nanopubs use named graphs)
     response = httpx.get(
         nanopub_uri,
-        headers={"Accept": "application/ld+json"},
+        headers={"Accept": "application/trig"},
         follow_redirects=True,
     )
     response.raise_for_status()
 
-    # Parse the nanopub RDF and extract the assertion graph
-    g = Graph()
-    g.parse(data=response.text, format="json-ld")
+    # Parse the nanopub as a Dataset (supports named graphs)
+    ds = Dataset()
+    ds.parse(data=response.text, format="trig")
 
-    # Extract the ODRL policy from the assertion
-    # Nanopub structure: head → assertion, provenance, pubinfo
-    # The ODRL policy is in the assertion graph
-    policy_json = _extract_odrl_from_graph(g)
-    return policy_json
+    # Find the assertion graph (named <nanopub-uri>/assertion)
+    assertion_uri = nanopub_uri.rstrip("/") + "/assertion"
+    assertion_graph = ds.graph(assertion_uri)
+
+    if len(assertion_graph) == 0:
+        # Try alternate: look for any graph containing ODRL triples
+        for g in ds.graphs():
+            if len(g) > 0:
+                try:
+                    return _extract_odrl_from_graph(g)
+                except ValueError:
+                    continue
+        raise ValueError("No ODRL policy found in the nanopub")
+
+    return _extract_odrl_from_graph(assertion_graph)
 
 
 def _extract_odrl_from_graph(g: Graph) -> dict:
-    """Extract ODRL policy triples from an RDF graph."""
-    from rdflib import ODRL2, RDF
+    """Extract ODRL policy from an RDF graph as a nested dict.
 
-    # Find the policy node (subject with type odrl:Offer, odrl:Set, or odrl:Agreement)
-    policy_types = [ODRL2.Offer, ODRL2.Set, ODRL2.Agreement]
+    Builds a dict matching the structure expected by evaluate_policy:
+    {
+      "type": "Offer",
+      "target": "https://...",
+      "permission": [{"action": "use", "constraint": [{"leftOperand": ..., ...}]}],
+      "prohibition": [{"action": "distribute"}],
+      "duty": [{"action": "attribute", "attributedParty": "https://..."}]
+    }
+    """
+    from rdflib import ODRL2, RDF, Namespace
+
+    ODRL = Namespace("http://www.w3.org/ns/odrl/2/")
+
+    def _uri_local(uri):
+        """Get the local part of a URI."""
+        s = str(uri)
+        return s.rsplit("#", 1)[-1].rsplit("/", 1)[-1]
+
+    def _node_to_dict(node):
+        """Convert a blank/local node to a dict of its properties."""
+        result = {}
+        for p, o in g.predicate_objects(node):
+            key = _uri_local(p)
+            val = _uri_local(o) if not str(o).startswith("http") else str(o)
+            if key in result:
+                if not isinstance(result[key], list):
+                    result[key] = [result[key]]
+                result[key].append(val)
+            else:
+                result[key] = val
+        return result
+
+    # Find the policy node
+    policy_types = [ODRL.Offer, ODRL.Set, ODRL.Agreement]
     for policy_type in policy_types:
-        for s in g.subjects(RDF.type, policy_type):
-            # Serialize just the policy subgraph
-            policy_graph = Graph()
-            for triple in g.triples((s, None, None)):
-                policy_graph.add(triple)
-            return json.loads(
-                policy_graph.serialize(format="json-ld")
-            )
+        for policy_node in g.subjects(RDF.type, policy_type):
+            result = {
+                "uid": str(policy_node),
+                "type": _uri_local(policy_type),
+            }
+
+            # Target
+            for o in g.objects(policy_node, ODRL.target):
+                result["target"] = str(o)
+
+            # Permissions
+            perms = []
+            for perm_node in g.objects(policy_node, ODRL.permission):
+                perm = {}
+                for o in g.objects(perm_node, ODRL.action):
+                    perm["action"] = str(o)
+                constraints = []
+                for const_node in g.objects(perm_node, ODRL.constraint):
+                    constraint = {}
+                    for o in g.objects(const_node, ODRL.leftOperand):
+                        constraint["leftOperand"] = str(o)
+                    for o in g.objects(const_node, ODRL.operator):
+                        constraint["operator"] = str(o)
+                    for o in g.objects(const_node, ODRL.rightOperand):
+                        constraint["rightOperand"] = str(o)
+                    constraints.append(constraint)
+                if constraints:
+                    perm["constraint"] = constraints
+                perms.append(perm)
+            if perms:
+                result["permission"] = perms
+
+            # Prohibitions
+            prohibs = []
+            for prohib_node in g.objects(policy_node, ODRL.prohibition):
+                prohib = {}
+                for o in g.objects(prohib_node, ODRL.action):
+                    prohib["action"] = str(o)
+                prohibs.append(prohib)
+            if prohibs:
+                result["prohibition"] = prohibs
+
+            # Duties
+            duties = []
+            for duty_node in g.objects(policy_node, ODRL.duty):
+                duty = {}
+                for o in g.objects(duty_node, ODRL.action):
+                    duty["action"] = str(o)
+                for o in g.objects(duty_node, ODRL.attributedParty):
+                    duty["attributedParty"] = str(o)
+                duties.append(duty)
+            if duties:
+                result["duty"] = duties
+
+            return result
+
     raise ValueError("No ODRL policy found in the RDF graph")
 
 
@@ -214,9 +305,14 @@ def evaluate_policy(
             right = constraint.get("rightOperand", "")
 
             if left in ("purpose", "odrl:purpose", "http://www.w3.org/ns/odrl/2/purpose"):
-                if operator in ("eq", "odrl:eq"):
-                    # Compare purpose value or DPV URI
-                    if purpose != right and f"https://w3id.org/dpv#{purpose}" != right:
+                if operator in ("eq", "odrl:eq", "http://www.w3.org/ns/odrl/2/eq"):
+                    # Compare purpose: short name, DPV URI, or full URI
+                    matches = (
+                        purpose == right
+                        or f"https://w3id.org/dpv#{purpose}" == right
+                        or purpose == right.rsplit("#", 1)[-1]
+                    )
+                    if not matches:
                         all_satisfied = False
                         break
             elif context and left in context:
