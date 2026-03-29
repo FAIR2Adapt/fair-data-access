@@ -18,7 +18,7 @@ project:
     - file: index.md
     - file: tutorial-provider.md
     - file: tutorial-consumer.md
-    - title: ODRL Nanopublications
+    - title: Access Policies
       children:
         - file: ../nanopubs/create_odrl_template.ipynb
         - file: ../nanopubs/create_odrl_policy_nanopub.ipynb
