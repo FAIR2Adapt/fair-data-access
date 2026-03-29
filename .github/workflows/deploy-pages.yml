@@ -37,6 +37,8 @@ jobs:
 
       - name: Build site
         working-directory: docs
+        env:
+          BASE_URL: /fair-data-access
         run: myst build --html
 
       - name: Setup Pages
