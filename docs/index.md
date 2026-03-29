@@ -14,38 +14,26 @@ This tool is designed for data that is **private but not sensitive** — data th
 ## How it works
 
 ```{mermaid}
-flowchart TD
-    subgraph "<b>1. Data Provider</b>"
-        A["🔒 Encrypt data<br/>(AES-256-GCM)"]
-        B["📜 Publish ODRL policy<br/>(nanopublication)"]
-        C["☁️ Upload encrypted data<br/>(Zenodo / S3 Pangeo)"]
-        A --> B --> C
+%%{init: {'theme': 'base', 'themeVariables': {'fontSize': '16px', 'fontFamily': 'Quicksand'}, 'flowchart': {'nodeSpacing': 30, 'rankSpacing': 40, 'padding': 15}}}%%
+
+flowchart LR
+    subgraph P["<b>1. Data Provider</b>"]
+        direction TB
+        A["Encrypt data\n(AES-256-GCM)"] --> B["Publish ODRL policy\n(nanopublication)"] --> C["Upload to\nZenodo / S3 Pangeo"]
     end
 
-    subgraph "<b>2. Access Request</b>"
-        D["📝 Researcher opens<br/>GitHub Issue with DID"]
-        E["🔍 Resolve DID<br/>→ get public key"]
-        F["⚖️ Evaluate<br/>ODRL policy"]
-        D --> E --> F
+    subgraph G["<b>2. GitHub Actions</b>"]
+        direction TB
+        D["Researcher requests\naccess (GitHub Issue)"] --> E["Resolve DID +\nevaluate ODRL policy"] --> F["Wrap key +\npublish access grant"]
     end
 
-    subgraph "<b>3. Key Distribution</b>"
-        G["🔑 Wrap dataset key<br/>with requester's public key"]
-        H["📋 Publish access grant<br/>(nanopub audit trail)"]
-        I["🌐 Serve wrapped key<br/>(GitHub Pages)"]
-        G --> H --> I
-    end
-
-    subgraph "<b>4. Data Consumer</b>"
-        J["⬇️ Download<br/>encrypted data + key"]
-        K["🔓 Decrypt with<br/>DID private key"]
-        L["🗺️ Run analysis"]
-        J --> K --> L
+    subgraph R["<b>3. Data Consumer</b>"]
+        direction TB
+        H["Download wrapped key\n(GitHub Pages)"] --> I["Decrypt with\nDID private key"] --> J["Run analysis"]
     end
 
     C --> D
-    F --> G
-    I --> J
+    F --> H
 ```
 
 ## Quick start
