@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>FAIR2Adapt Data Access</title>
+  <style>
+    body { font-family: system-ui, sans-serif; max-width: 700px; margin: 2rem auto; padding: 0 1rem; line-height: 1.6; }
+    h1 { color: #2c3e50; }
+    a { color: #e67e22; }
+    code { background: #f4f4f4; padding: 0.2em 0.4em; border-radius: 3px; }
+    .step { margin: 1rem 0; padding: 1rem; background: #fafafa; border-left: 3px solid #e67e22; }
+  </style>
+</head>
+<body>
+  <h1>FAIR2Adapt Data Access</h1>
+  <p>
+    This service provides ODRL-based access control for FAIR2Adapt datasets.
+    Data files are encrypted with AES-256-GCM and access is controlled via
+    ODRL policies published as nanopublications.
+  </p>
+
+  <h2>How to request access</h2>
+
+  <div class="step">
+    <strong>1.</strong> Set up a <code>did:web</code> identifier:<br>
+    <code>fair-data-access keygen && fair-data-access did-doc did:web:yourdomain.org public_key.pem</code>
+  </div>
+
+  <div class="step">
+    <strong>2.</strong> Open an
+    <a href="https://github.com/FAIR2Adapt/fair-data-access/issues/new?template=access-request.yml">access request</a>
+    on GitHub.
+  </div>
+
+  <div class="step">
+    <strong>3.</strong> If approved, your wrapped decryption key will appear at:<br>
+    <code>https://fair2adapt.github.io/fair-data-access/keys/&lt;did-hash&gt;/&lt;dataset&gt;.key</code>
+  </div>
+
+  <div class="step">
+    <strong>4.</strong> Decrypt the data:<br>
+    <code>fair-data-access decrypt dataset.gpkg.enc -k &lt;unwrapped-key&gt;</code>
+  </div>
+
+  <h2>Available datasets</h2>
+  <ul>
+    <li><strong>hamburg-buildings</strong> — Building footprints with demographic indicators</li>
+    <li><strong>hamburg-statistical-units</strong> — Statistical units with vulnerability indicators</li>
+    <li><strong>hamburg-risk-private</strong> — Building-level flood risk outputs</li>
+  </ul>
+
+  <h2>Links</h2>
+  <ul>
+    <li><a href="https://github.com/FAIR2Adapt/fair-data-access">Source code</a></li>
+    <li><a href="https://github.com/FAIR2Adapt/urban_pfr_toolbox_hamburg">Flood risk toolbox</a></li>
+    <li><a href="https://fair2adapt.eu">FAIR2Adapt project</a></li>
+  </ul>
+</body>
+</html>
