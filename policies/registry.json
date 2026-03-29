@@ -4,34 +4,14 @@
     "policy_file": "hamburg-buildings.jsonld",
     "policy_nanopub": null,
     "encrypted_files": [
-      "buildings.gpkg.enc"
+      "buildings.fgb.enc"
     ],
     "distributions": [
       {
-        "name": "Zenodo",
-        "contentUrl": null
-      },
-      {
         "name": "S3 Pangeo@EOSC",
-        "contentUrl": null,
-        "endpointUrl": "https://s3.pangeo-eosc.eu"
+        "contentUrl": "s3://afouilloux-fair2adapt/buildings.fgb.enc",
+        "endpointUrl": "https://pangeo-eosc-minioapi.vm.fedcloud.eu/"
       }
-    ]
-  },
-  "hamburg-statistical-units": {
-    "description": "Hamburg statistical units with vulnerability indicators",
-    "policy_file": "hamburg-statistical-units.jsonld",
-    "policy_nanopub": null,
-    "encrypted_files": [
-      "statistical_units.gpkg.enc"
-    ]
-  },
-  "hamburg-risk-private": {
-    "description": "Building-level flood risk outputs (PFRMA, PFRWB)",
-    "policy_file": "hamburg-risk-private.jsonld",
-    "policy_nanopub": null,
-    "encrypted_files": [
-      "buildings_with_risk.gpkg.enc"
     ]
   }
 }
