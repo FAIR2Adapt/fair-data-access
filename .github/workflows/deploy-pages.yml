@@ -41,6 +41,14 @@ jobs:
           BASE_URL: /fair-data-access
         run: myst build --html
 
+      - name: Copy static files (DID document, keys)
+        run: |
+          cp docs/did.json docs/_build/html/did.json
+          # Copy any existing wrapped keys
+          if [ -d docs/keys ]; then
+            cp -r docs/keys docs/_build/html/keys
+          fi
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
 
