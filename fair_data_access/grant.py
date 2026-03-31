@@ -20,6 +20,21 @@ FAIR = Namespace("https://fair2adapt.eu/ns/")
 SPARQL_ENDPOINT = "https://query.knowledgepixels.com/repo/full"
 
 
+def _did_to_url(did: str) -> str:
+    """Convert a did:web identifier to its HTTPS URL.
+
+    e.g. did:web:fair2adapt.github.io:fair-data-access
+      → https://fair2adapt.github.io/fair-data-access/did.json
+    """
+    if did.startswith("did:web:"):
+        parts = did.replace("did:web:", "").split(":")
+        domain = parts[0]
+        path = "/".join(parts[1:]) if len(parts) > 1 else ""
+        url = f"https://{domain}/{path}/did.json" if path else f"https://{domain}/did.json"
+        return url
+    return did
+
+
 def find_grants(dataset_uri: str, requester_did: str = None) -> list[dict]:
     """Search the nanopub network for ODRL Access Grant for FAIR Data nanopubs.
 
@@ -34,7 +49,15 @@ def find_grants(dataset_uri: str, requester_did: str = None) -> list[dict]:
     """
     assignee_filter = ""
     if requester_did:
-        assignee_filter = f'?grant odrl:assignee <{requester_did}> .'
+        # Search for both did:web: and its HTTPS URL equivalent
+        did_url = _did_to_url(requester_did)
+        if did_url != requester_did:
+            assignee_filter = (
+                f'?grant odrl:assignee ?assignee .\n'
+                f'        FILTER (?assignee = <{requester_did}> || ?assignee = <{did_url}>)'
+            )
+        else:
+            assignee_filter = f'?grant odrl:assignee <{requester_did}> .'
 
     query = f"""
     PREFIX odrl: <http://www.w3.org/ns/odrl/2/>
