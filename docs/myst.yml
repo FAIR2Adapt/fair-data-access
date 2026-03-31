@@ -24,6 +24,8 @@ project:
         - file: ../nanopubs/create_odrl_policy_nanopub.ipynb
         - file: ../nanopubs/create_access_grant_nanopub.ipynb
     - file: architecture.md
+  static:
+    - did.json
 site:
   template: book-theme
   options:
