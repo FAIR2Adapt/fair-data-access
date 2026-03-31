@@ -146,6 +146,7 @@ def fetch_policy(nanopub_uri: str) -> dict:
         nanopub_uri,
         headers={"Accept": "application/trig"},
         follow_redirects=True,
+        timeout=60,
     )
     response.raise_for_status()
 

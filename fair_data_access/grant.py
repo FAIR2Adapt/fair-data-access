@@ -98,7 +98,7 @@ def find_grants(dataset_uri: str, requester_did: str = None) -> list[dict]:
         params={"query": query},
         headers={"Accept": "application/json"},
         follow_redirects=True,
-        timeout=30,
+        timeout=60,
     )
     response.raise_for_status()
 
@@ -119,7 +119,7 @@ def get_nanopub_creator(nanopub_uri: str) -> str:
         nanopub_uri,
         headers={"Accept": "application/trig"},
         follow_redirects=True,
-        timeout=30,
+        timeout=60,
     )
     response.raise_for_status()
 
@@ -147,7 +147,7 @@ def verify_nanopub_signature(nanopub_uri: str) -> bool:
         nanopub_uri,
         headers={"Accept": "application/trig"},
         follow_redirects=True,
-        timeout=30,
+        timeout=60,
     )
     response.raise_for_status()
 
