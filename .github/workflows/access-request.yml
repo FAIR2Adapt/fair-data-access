@@ -2,7 +2,7 @@ name: Process Data Access Request
 
 on:
   issues:
-    types: [opened]
+    types: [opened, labeled]
 
 jobs:
   evaluate:
@@ -17,7 +17,7 @@ jobs:
 
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
 
       - name: Install dependencies
         run: pip install -e .
@@ -30,7 +30,7 @@ jobs:
         id: resolve
         run: python scripts/resolve_did_action.py ${{ steps.parse.outputs.did }}
 
-      - name: Evaluate ODRL policy
+      - name: Verify ODRL Access Grant
         id: evaluate
         run: |
           python scripts/evaluate_policy_action.py \
@@ -47,25 +47,11 @@ jobs:
             --did "${{ steps.parse.outputs.did }}" \
             --public-key-pem "${{ steps.resolve.outputs.public_key_pem_b64 }}"
         env:
-          # Each dataset has its symmetric key stored as a GitHub Secret
-          # Named like: KEY_HAMBURG_BUILDINGS (dataset id uppercased, hyphens→underscores)
           DATASET_KEY: ${{ secrets[format('KEY_{0}', steps.parse.outputs.dataset_secret_name)] }}
-
-      - name: Publish access grant nanopub
-        if: steps.evaluate.outputs.decision == 'permit'
-        run: |
-          python scripts/publish_grant.py \
-            --dataset "${{ steps.parse.outputs.dataset }}" \
-            --did "${{ steps.parse.outputs.did }}" \
-            --policy-nanopub "${{ steps.evaluate.outputs.policy_nanopub_uri }}" \
-            --workflow-run "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
-        env:
-          NANOPUB_PRIVATE_KEY: ${{ secrets.NANOPUB_PRIVATE_KEY }}
 
       - name: Deploy wrapped key to GitHub Pages
         if: steps.evaluate.outputs.decision == 'permit'
         run: |
-          # Copy wrapped key to gh-pages directory
           DID_HASH=$(echo -n "${{ steps.parse.outputs.did }}" | sha256sum | cut -d' ' -f1)
           DATASET="${{ steps.parse.outputs.dataset }}"
           mkdir -p docs/keys/${DID_HASH}
@@ -87,25 +73,24 @@ jobs:
           gh issue comment ${{ github.event.issue.number }} --body "$(cat <<EOF
           ## Access Granted
 
-          Your request has been evaluated against the dataset's ODRL policy and **approved**.
+          A valid [ODRL Access Grant for FAIR Data](${{ steps.evaluate.outputs.grant_nanopub_uri }}) was found and verified:
+          - **Signature:** valid
+          - **Authorized by:** policy publisher (creator match verified)
 
           **Wrapped key URL:**
           \`${PAGES_URL}/keys/${DID_HASH}/${DATASET}.key\`
 
           **How to decrypt:**
           \`\`\`bash
-          # Download the wrapped key
           curl -o wrapped_key.json "${PAGES_URL}/keys/${DID_HASH}/${DATASET}.key"
 
-          # Decrypt with your DID private key
           fair-data-access decrypt ${DATASET}.gpkg.enc \\
             --wrapped-key wrapped_key.json \\
             --private-key your_private_key.pem
           \`\`\`
 
-          **Access grant nanopub:** ${{ steps.wrap.outputs.grant_nanopub_uri || 'pending' }}
-
-          **Terms:** This access is granted under the dataset's [ODRL policy](${{ steps.evaluate.outputs.policy_nanopub_uri }}). Please respect the usage conditions.
+          **Policy:** [${{ steps.evaluate.outputs.policy_nanopub_uri }}](${{ steps.evaluate.outputs.policy_nanopub_uri }})
+          **Grant:** [${{ steps.evaluate.outputs.grant_nanopub_uri }}](${{ steps.evaluate.outputs.grant_nanopub_uri }})
           EOF
           )"
           gh issue close ${{ github.event.issue.number }} --reason completed
@@ -118,11 +103,16 @@ jobs:
           gh issue comment ${{ github.event.issue.number }} --body "$(cat <<EOF
           ## Access Denied
 
-          Your request was evaluated against the dataset's ODRL policy and could not be approved.
+          No valid ODRL Access Grant for FAIR Data was found for your request.
 
           **Reason:** ${{ steps.evaluate.outputs.reason }}
 
-          If you believe this is an error, please contact the dataset maintainers.
+          **Next steps:**
+          1. Contact the data provider to request access
+          2. The provider will review your request and publish an ODRL Access Grant via [Nanodash](https://nanodash.knowledgepixels.com/publish?template=https://w3id.org/np/RAeRMv6jOibLPIYBMOGu_FsX6NQ6B59KJCgCFkue4z7Ac)
+          3. Once the grant is published, re-open this issue or create a new one
+
+          **Policy:** [${{ steps.evaluate.outputs.policy_nanopub_uri }}](${{ steps.evaluate.outputs.policy_nanopub_uri }})
           EOF
           )"
           gh issue close ${{ github.event.issue.number }} --reason "not planned"

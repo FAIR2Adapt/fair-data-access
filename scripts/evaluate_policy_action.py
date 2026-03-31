@@ -1,7 +1,15 @@
-"""Evaluate an ODRL policy for a GitHub Actions access request.
+"""Verify an ODRL Access Grant for a GitHub Actions access request.
 
-Loads the policy for the requested dataset, evaluates it against
-the requester's DID and declared purpose, and outputs the decision.
+Checks that the data provider has published a valid ODRL Access Grant
+for FAIR Data nanopub for this requester + dataset, with verified
+signature and creator match against the policy publisher.
+
+Flow:
+1. Requester opens a GitHub Issue requesting access
+2. Data provider reviews and publishes a grant via Nanodash
+3. Requester triggers this workflow (or it runs on issue label)
+4. This script verifies the grant nanopub exists and is valid
+5. If valid → key is wrapped and released
 """
 
 import argparse
@@ -10,10 +18,9 @@ import os
 import sys
 from pathlib import Path
 
-from fair_data_access.policy import load_policy, evaluate_policy
+from fair_data_access.grant import verify_access
 
 
-# Map dataset IDs to their ODRL policy files (or nanopub URIs)
 POLICY_DIR = Path(__file__).parent.parent / "policies"
 
 
@@ -21,52 +28,55 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dataset", required=True)
     parser.add_argument("--did", required=True)
-    parser.add_argument("--purpose", default="")
+    parser.add_argument("--purpose", default="")  # kept for logging, not used for decisions
     args = parser.parse_args()
 
-    # Look for a local policy file first, fall back to nanopub
-    policy_file = POLICY_DIR / f"{args.dataset}.jsonld"
-    if policy_file.exists():
-        policy = load_policy(policy_file)
-        policy_uri = policy.get("uid", str(policy_file))
-    else:
-        # Try to fetch from nanopub network
-        from fair_data_access.policy import fetch_policy
-        # Policy nanopub URIs should be configured in a dataset registry
-        registry_file = POLICY_DIR / "registry.json"
-        if registry_file.exists():
-            registry = json.loads(registry_file.read_text())
-            nanopub_uri = registry.get(args.dataset, {}).get("policy_nanopub")
-            if nanopub_uri:
-                policy = fetch_policy(nanopub_uri)
-                policy_uri = nanopub_uri
-            else:
-                print(f"No policy found for dataset: {args.dataset}")
-                _set_output("decision", "deny")
-                _set_output("reason", f"No policy configured for dataset '{args.dataset}'")
-                sys.exit(0)
-        else:
-            print(f"No policy file or registry found for dataset: {args.dataset}")
-            _set_output("decision", "deny")
-            _set_output("reason", f"No policy configured for dataset '{args.dataset}'")
-            sys.exit(0)
+    # Load registry to get the policy nanopub URI
+    registry_file = POLICY_DIR / "registry.json"
+    if not registry_file.exists():
+        print(f"No registry found")
+        _set_output("decision", "deny")
+        _set_output("reason", "No policy registry configured")
+        sys.exit(0)
 
-    # Evaluate
-    decision = evaluate_policy(
-        policy,
+    registry = json.loads(registry_file.read_text())
+    dataset_entry = registry.get(args.dataset, {})
+    policy_nanopub = dataset_entry.get("policy_nanopub")
+
+    if not policy_nanopub:
+        print(f"No policy nanopub configured for dataset: {args.dataset}")
+        _set_output("decision", "deny")
+        _set_output("reason", f"No policy configured for dataset '{args.dataset}'")
+        sys.exit(0)
+
+    # Build the dataset URI from the registry convention
+    dataset_uri = f"https://fair2adapt.eu/data/{args.dataset}"
+
+    print(f"Dataset:   {args.dataset} ({dataset_uri})")
+    print(f"Requester: {args.did}")
+    print(f"Policy:    {policy_nanopub}")
+    print()
+
+    # Verify that a valid grant nanopub exists
+    result = verify_access(
+        dataset_uri=dataset_uri,
         requester_did=args.did,
-        purpose=args.purpose,
+        policy_nanopub_uri=policy_nanopub,
     )
 
-    if decision:
-        print(f"PERMIT: {args.did} may access {args.dataset} for purpose={args.purpose}")
+    if result["granted"]:
+        print(f"\nPERMIT: valid grant found")
+        print(f"  Grant:   {result['grant_nanopub']}")
+        print(f"  Creator: {result['grant_creator']}")
         _set_output("decision", "permit")
-        _set_output("policy_nanopub_uri", policy_uri)
+        _set_output("policy_nanopub_uri", policy_nanopub)
+        _set_output("grant_nanopub_uri", result["grant_nanopub"])
     else:
-        reason = f"Policy constraints not satisfied (purpose={args.purpose})"
-        print(f"DENY: {reason}")
+        reason = result["reason"]
+        print(f"\nDENY: {reason}")
         _set_output("decision", "deny")
         _set_output("reason", reason)
+        _set_output("policy_nanopub_uri", policy_nanopub)
 
 
 def _set_output(name: str, value: str):
