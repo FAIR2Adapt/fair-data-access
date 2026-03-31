@@ -55,7 +55,7 @@ jobs:
           # The wrapped key is already at the right path from wrap_key_action.py
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "${{ steps.wrap.outputs.wrapped_key_path }}"
+          git add -f "${{ steps.wrap.outputs.wrapped_key_path }}"
           git commit -m "Grant access: ${{ steps.parse.outputs.dataset }} → ${{ steps.parse.outputs.did }}"
           git push
 
