@@ -21,7 +21,15 @@ def main():
         print(f"ERROR: No DATASET_KEY secret configured for {args.dataset}")
         sys.exit(1)
 
-    dataset_key = base64.b64decode(dataset_key_b64)
+    # Support both hex and base64 encoded keys
+    try:
+        dataset_key = bytes.fromhex(dataset_key_b64)
+    except ValueError:
+        dataset_key = base64.b64decode(dataset_key_b64)
+
+    if len(dataset_key) != 32:
+        print(f"ERROR: Dataset key must be 32 bytes (AES-256), got {len(dataset_key)}")
+        sys.exit(1)
     recipient_pubkey_pem = base64.b64decode(args.public_key_pem)
 
     wrapped = wrap_key(dataset_key, recipient_pubkey_pem)
