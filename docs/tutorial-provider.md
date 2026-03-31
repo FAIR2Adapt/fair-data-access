@@ -1,6 +1,6 @@
 ---
 title: "Tutorial: Data Provider"
-description: How to encrypt data, create ODRL policies, and set up automated access control
+description: How to encrypt data, create ODRL policies, publish access grants, and set up the key server
 ---
 
 # Tutorial: Data Provider
@@ -15,9 +15,9 @@ Anyone who holds private data that should be shared under controlled conditions.
 
 ## Prerequisites
 
-- Python 3.9+
+- Python 3.12+
 - A GitHub account
-- A web domain where you can serve a `did.json` file (for `did:web`)
+- A web domain where you can serve a `did.json` file (for `did:web`), or use GitHub Pages
 
 ```bash
 # Install fair-data-access
@@ -34,7 +34,6 @@ A [Decentralized Identifier](https://www.w3.org/TR/did-core/) (DID) proves your 
 ### Generate a keypair
 
 ```bash
-# Generate an EC P-256 keypair
 fair-data-access keygen -d ~/.fair-data-access/
 ```
 
@@ -46,131 +45,82 @@ fair-data-access keygen -d ~/.fair-data-access/
 ### Create a DID document
 
 ```bash
-fair-data-access did-doc did:web:fair2adapt.eu \
+fair-data-access did-doc did:web:fair2adapt.github.io:fair-data-access \
   ~/.fair-data-access/public_key.pem \
   -o did.json
 ```
 
-Upload `did.json` to your web server so it's accessible at:
+Upload `did.json` to your web server or GitHub Pages so it's accessible at:
 
 ```text
-https://your-domain.eu/.well-known/did.json
+https://fair2adapt.github.io/fair-data-access/did.json
 ```
 
-:::{tip}
-If you use GitHub Pages for your project website, you can place `did.json` in a `.well-known/` directory in your pages repository.
-:::
-
 :::{warning}
-Keep `private_key.pem` secret. Never commit it to a repository. The private key is used to prove your identity and decrypt wrapped keys.
+Keep `private_key.pem` secret. Never commit it to a repository.
 :::
 
 ## Step 2: Encrypt your data
 
-Each data file is encrypted with AES-256-GCM. A unique symmetric key is generated per dataset. The key is stored as a GitHub Secret — never alongside the data.
-
-### Encrypt a single file
+Each data file is encrypted with AES-256-GCM. A unique symmetric key is generated per dataset.
 
 ```bash
-fair-data-access encrypt buildings.gpkg --save-key buildings_key.txt
+fair-data-access encrypt buildings.fgb --save-key buildings_key.txt
 ```
 
 ```text
-→ Encrypted: buildings.gpkg.enc
-→ Key (base64, store securely): k7B2x9...
-```
-
-### Encrypt multiple files
-
-```bash
-fair-data-access encrypt statistical_units.gpkg --save-key stats_key.txt
-fair-data-access encrypt buildings_with_risk.gpkg --save-key risk_key.txt
-```
-
-You now have:
-
-```text
-buildings.gpkg.enc          ← encrypted (safe to publish anywhere)
-buildings_key.txt           ← symmetric key (keep secret!)
-statistical_units.gpkg.enc
-stats_key.txt
-buildings_with_risk.gpkg.enc
-risk_key.txt
+→ Encrypted: buildings.fgb.enc
+→ Key saved to: buildings_key.txt
 ```
 
 :::{warning}
-Store the key files securely and then delete them from disk. You will add them as GitHub Secrets in [Step 7](#step-7-set-up-the-github-key-server).
+Save the key securely. You will add it as a GitHub Secret in [Step 6](#step-6-set-up-the-github-key-server). Then delete the key file from disk.
 :::
 
-## Step 3: Create an ODRL policy
+## Step 3: Upload encrypted data
 
-The [ODRL](https://www.w3.org/TR/odrl-model/) policy defines who can do what with your data.
-
-### Common patterns
-
-| Pattern | Permissions | Prohibitions |
-|---------|-------------|-------------|
-| Academic only | use, reproduce (purpose = https://w3id.org/dpv#AcademicResearch) | distribute, commercialize |
-| Consortium only | use, reproduce, distribute (assignee = consortium) | commercialize |
-| Government planning | use (purpose = GovernmentPlanning) | distribute, commercialize |
-
-### Create a policy
+The encrypted files can be stored on any public repository — they are useless without the decryption key.
 
 ```bash
-fair-data-access policy \
-  --uid "https://fair2adapt.eu/policy/hamburg-buildings" \
-  --target "https://fair2adapt.eu/data/hamburg-buildings" \
-  --permit-actions use reproduce \
-  --prohibit-actions distribute commercialize \
-  --purpose https://w3id.org/dpv#AcademicResearch \
-  --require-attribution \
-  -o policies/hamburg-buildings.jsonld
+# Upload to S3 Pangeo@EOSC
+s3cmd put buildings.fgb.enc \
+  s3://afouilloux-fair2adapt/buildings.fgb.enc \
+  --host=pangeo-eosc-minioapi.vm.fedcloud.eu \
+  --host-bucket="%(bucket)s.pangeo-eosc-minioapi.vm.fedcloud.eu"
 ```
 
-This generates:
+## Step 4: Publish an ODRL Access Policy
 
-```{code-block} json
-:caption: policies/hamburg-buildings.jsonld
+The access policy defines who can do what with your data. Policies are published as [nanopublications](https://nanopub.net/) — immutable, cryptographically signed, and independently verifiable.
 
-{
-  "@context": "http://www.w3.org/ns/odrl.jsonld",
-  "@type": "Offer",
-  "uid": "https://fair2adapt.eu/policy/hamburg-buildings",
-  "permission": [{
-    "target": "https://fair2adapt.eu/data/hamburg-buildings",
-    "action": ["use", "reproduce"],
-    "constraint": [{
-      "leftOperand": "purpose",
-      "operator": "eq",
-      "rightOperand": "https://w3id.org/dpv#AcademicResearch"
-    }],
-    "duty": [{ "action": "attribute" }]
-  }],
-  "prohibition": [{
-    "target": "https://fair2adapt.eu/data/hamburg-buildings",
-    "action": ["distribute", "commercialize"]
-  }]
-}
-```
+### Create the policy via Nanodash
 
-## Step 4: Publish the policy as a nanopublication
+Use the **ODRL Access Policy for FAIR Data** template on Nanodash:
 
-Publishing the policy as a [nanopublication](https://nanopub.net/) makes it immutable, cryptographically signed, and independently verifiable. No one (including you) can silently change the access terms after publishing.
+**[Create ODRL Access Policy](https://nanodash.knowledgepixels.com/publish?template=https://w3id.org/np/RA61D4c7dB5t0B1mLhc78bN2vagqYTXQiJDKY0yImRULI)**
 
-```python
-from fair_data_access.policy import load_policy
-from fair_data_access.nanopub_utils import publish_policy
+Fill in:
 
-policy = load_policy('policies/hamburg-buildings.jsonld')
-uri = publish_policy(policy, author_orcid='https://orcid.org/YOUR-ORCID')
-print(f'Published: {uri}')
-```
+| Field | Example |
+|-------|---------|
+| Policy URI | `hamburg-buildings` |
+| Type | Offer |
+| Dataset URI | `hamburg-buildings` |
+| Permitted action | Use |
+| Purpose constraint | Academic Research |
+| Prohibited action | Distribute |
+| Duty action | Attribute |
+| Attribution party | `https://fair2adapt-eosc.eu` |
 
-```text
-→ Published: https://w3id.org/np/RA-abc123...
-```
+Click the **+** button on the permission group to add multiple permitted actions (e.g., Use and Reproduce), and on the prohibition group for multiple prohibited actions (e.g., Distribute and Commercialize).
 
-Save the returned nanopub URI and update `policies/registry.json`:
+:::{tip}
+The policy nanopub is signed with your ORCID. Only you can publish grants against it — the system verifies that the grant publisher matches the policy publisher.
+:::
+
+### Update the policy registry
+
+After publishing, update `policies/registry.json` with the nanopub URI:
 
 ```{code-block} json
 :caption: policies/registry.json
@@ -178,132 +128,92 @@ Save the returned nanopub URI and update `policies/registry.json`:
 {
   "hamburg-buildings": {
     "description": "Hamburg building footprints with demographic indicators",
-    "policy_file": "hamburg-buildings.jsonld",
-    "policy_nanopub": "https://w3id.org/np/RA-abc123..."
+    "policy_nanopub": "https://w3id.org/np/RAir7keZs8Jy7i8...",
+    "encrypted_files": ["buildings.fgb.enc"],
+    "distributions": [
+      {
+        "name": "S3 Pangeo@EOSC",
+        "contentUrl": "s3://afouilloux-fair2adapt/buildings.fgb.enc",
+        "endpointUrl": "https://pangeo-eosc-minioapi.vm.fedcloud.eu/"
+      }
+    ]
   }
 }
 ```
 
-## Step 5: Update your RO-Crate metadata
+## Step 5: Review requests and publish grants
 
-The RO-Crate metadata (always unencrypted and public) links the encrypted data to its ODRL policy, download locations, and variable descriptions. This is what makes the data **discoverable**.
+When a researcher requests access (via a GitHub Issue), you review their request and decide whether to approve it.
 
-```python
-from fair_data_access.rocrate import add_encrypted_file_to_crate
+### Review the request
 
-add_encrypted_file_to_crate(
-    crate_metadata_path='ro-crate-metadata.json',
-    encrypted_file_id='buildings.gpkg.enc',
-    original_name='Hamburg building footprints',
-    description='227k buildings with demographic indicators',
-    encoding_format='application/geopackage+sqlite3',
-    policy_nanopub_uri='https://w3id.org/np/RA-abc123...',
-    key_server_url='https://fair2adapt.github.io/fair-data-access',
-    distribution_urls=[
-        {
-            'name': 'Zenodo',
-            'contentUrl': 'https://zenodo.org/records/XXXXX/files/buildings.gpkg.enc',
-            'identifier': 'https://doi.org/10.5281/zenodo.XXXXX',
-        },
-        {
-            'name': 'S3 Pangeo@EOSC',
-            'contentUrl': 's3://fair2adapt/hamburg/buildings.gpkg.enc',
-        },
-    ],
-    variable_measured=[
-        {'@id': 'https://w3id.org/np/RA-iadopt-elderly-singles-placeholder'},
-        {'@id': 'https://w3id.org/np/RA-iadopt-children-under-10-placeholder'},
-    ],
-)
-```
+The researcher's GitHub Issue contains:
+- Their DID (identity)
+- Stated purpose and affiliation
+- Justification for access
 
-This adds an entry like this to your `ro-crate-metadata.json`:
+### Publish an access grant via Nanodash
 
-```{code-block} json
-:caption: ro-crate-metadata.json (excerpt)
+If you approve, publish a grant using the **ODRL Access Grant for FAIR Data** template:
 
-{
-  "@id": "buildings.gpkg.enc",
-  "@type": "File",
-  "name": "Hamburg building footprints",
-  "encodingFormat": "application/geopackage+sqlite3",
-  "contentEncryption": {
-    "algorithm": "AES-256-GCM",
-    "keyServer": "https://fair2adapt.github.io/fair-data-access"
-  },
-  "hasPolicy": {
-    "@id": "https://w3id.org/np/RA-abc123..."
-  },
-  "distribution": [
-    {
-      "@type": "DataDownload",
-      "name": "Zenodo",
-      "contentUrl": "https://zenodo.org/records/XXXXX/files/buildings.gpkg.enc"
-    },
-    {
-      "@type": "DataDownload",
-      "name": "S3 Pangeo@EOSC",
-      "contentUrl": "s3://fair2adapt/hamburg/buildings.gpkg.enc"
-    }
-  ]
-}
-```
+**[Create ODRL Access Grant](https://nanodash.knowledgepixels.com/publish?template=https://w3id.org/np/RAeRMv6jOibLPIYBMOGu_FsX6NQ6B59KJCgCFkue4z7Ac)**
 
-## Step 6: Upload encrypted data
+Fill in:
 
-The encrypted files can be stored on any public repository — they are useless without the decryption key.
+| Field | Example |
+|-------|---------|
+| Grant identifier | `hamburg-buildings-grant-001` |
+| Action | Use |
+| Assignee | Requester's DID URL (e.g., `https://myuniversity.edu/researcher/did.json`) |
+| Under policy | The policy nanopub URI |
+| Dataset URI | `hamburg-buildings` |
+| Timestamp | Current date and time |
 
-### Zenodo (for archival + DOI)
+:::{note}
+Nanodash requires HTTP(S) URIs for the assignee field. Convert `did:web:myuniversity.edu:researcher` to `https://myuniversity.edu/researcher/did.json`. The system handles both formats.
+:::
 
-Upload via the [Zenodo web interface](https://zenodo.org/deposit/new) or API:
+### Trigger the key release
 
-- Upload `buildings.gpkg.enc` and `ro-crate-metadata.json` (unencrypted)
-- Set the license to match your ODRL policy
-- Note the DOI for your RO-Crate metadata
+After publishing the grant, add the `access-request` label to the researcher's GitHub Issue. The workflow will:
 
-### S3 Pangeo@EOSC (for cloud-native access)
+1. **Verify** the grant nanopub (signature + creator match against policy)
+2. **Wrap** the dataset key with the requester's public key
+3. **Deploy** the wrapped key to GitHub Pages
+4. **Comment** on the issue with the download URL
 
-```bash
-# Upload using s3cmd
-s3cmd put buildings.gpkg.enc \
-  s3://fair2adapt/hamburg/buildings.gpkg.enc \
-  --host=s3.pangeo-eosc.eu \
-  --host-bucket="%(bucket)s.s3.pangeo-eosc.eu"
+:::{important}
+Only grants signed by the same identity that published the policy are accepted. If someone else tries to publish a grant for your data, it will be rejected.
+:::
 
-# Make publicly readable (it's encrypted, so public access is safe)
-s3cmd setacl s3://fair2adapt/hamburg/buildings.gpkg.enc --acl-public
-```
+## Step 6: Set up the GitHub key server
 
-## Step 7: Set up the GitHub key server
-
-The dataset encryption keys are stored as GitHub Secrets and used by GitHub Actions to wrap keys for approved requesters.
-
-### A. Fork or use the repository
-
-If you're part of the FAIR2Adapt organisation, use [FAIR2Adapt/fair-data-access](https://github.com/FAIR2Adapt/fair-data-access) directly. Otherwise, fork it.
-
-### B. Add dataset keys as GitHub Secrets
+### Add dataset keys as GitHub Secrets
 
 Go to **Settings → Secrets and variables → Actions** and add a secret for each dataset:
 
 | Dataset | Secret name | Value |
 |---------|-------------|-------|
-| `hamburg-buildings` | `KEY_HAMBURG_BUILDINGS` | Contents of `buildings_key.txt` |
-| `hamburg-statistical-units` | `KEY_HAMBURG_STATISTICAL_UNITS` | Contents of `stats_key.txt` |
-| `hamburg-risk-private` | `KEY_HAMBURG_RISK_PRIVATE` | Contents of `risk_key.txt` |
+| `hamburg-buildings` | `KEY_HAMBURG_BUILDINGS` | Hex-encoded key from Step 2 |
 
 The secret name follows the pattern `KEY_<DATASET_ID>` with hyphens replaced by underscores.
 
-### C. Enable GitHub Pages
+### Enable GitHub Pages
 
 Go to **Settings → Pages** and set the source to **GitHub Actions**.
 
-### D. Update the policy registry
+### Commit and push
 
-Edit `policies/registry.json` to add your datasets with their nanopub URIs. Commit and push.
+Push `policies/registry.json` and the workflow files. The system is now ready to process access requests.
 
-:::{admonition} Done!
-:class: tip
+## Revoking access
 
-When a researcher opens an access request issue, the GitHub Actions workflow will automatically evaluate the ODRL policy, wrap the key, and publish the result. Each access grant is also recorded as a nanopublication for an immutable audit trail.
+To revoke a researcher's access, retract their grant nanopub:
+
+1. Find the grant nanopub URI (from the issue comment or nanopub network)
+2. Use `nanopubs/disapprove_nanopub.ipynb` to retract it
+3. Future key wrapping requests for that researcher will be denied
+
+:::{note}
+Revocation prevents new key distribution but does not invalidate already-downloaded wrapped keys. For full revocation, re-encrypt the data with a new key and update the GitHub Secret.
 :::

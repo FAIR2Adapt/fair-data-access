@@ -15,7 +15,7 @@ Any researcher who wants to use a private FAIR2Adapt dataset that is protected b
 
 ## Prerequisites
 
-- Python 3.9+
+- Python 3.12+
 - A GitHub account
 - A web domain where you can serve a `did.json` file
 
@@ -49,92 +49,79 @@ For `did:web`, the DID maps to a URL:
 - `did:web:example.com:path:to` → `https://example.com/path/to/did.json`
 :::
 
-## Step 2: Find a dataset
+## Step 2: Find a dataset and check its policy
 
-Datasets are discoverable through their RO-Crate metadata, which is always unencrypted and public. You can find them on:
+Datasets are discoverable through their RO-Crate metadata, which is always unencrypted and public.
 
-- [RO-Hub](https://www.rohub.org/)
-- [Dataverse](https://dataverse.org/)
-- [Zenodo](https://zenodo.org/)
-
-The RO-Crate metadata tells you:
-
-- What the dataset contains (`name`, `description`, `variableMeasured`)
-- The access policy (`hasPolicy` → nanopub URI)
-- Where to download (`distribution` → Zenodo / S3 URLs)
-- Where to request a key (`contentEncryption.keyServer`)
-
-## Step 3: Check the ODRL policy
-
-Before requesting access, you can inspect the policy:
+You can inspect the ODRL policy before requesting access:
 
 ```python
 from fair_data_access.policy import fetch_policy
 import json
 
-# Fetch the ODRL policy from the nanopub network
-policy = fetch_policy('https://w3id.org/np/RA-abc123...')
+policy = fetch_policy('https://w3id.org/np/RAir7keZs8Jy7i8...')
 print(json.dumps(policy, indent=2))
 ```
 
 This tells you:
 - **Permitted actions**: e.g., `use`, `reproduce`
-- **Constraints**: e.g., `purpose = https://w3id.org/dpv#AcademicResearch`
+- **Constraints**: e.g., `purpose = AcademicResearch`
 - **Prohibitions**: e.g., `distribute`, `commercialize`
 - **Duties**: e.g., `attribute` (you must cite the data provider)
 
-## Step 4: Request access
+## Step 3: Request access
 
-Open an [access request issue](https://github.com/FAIR2Adapt/fair-data-access/issues/new?template=access-request.yml) on GitHub and fill in the form:
+Open an [access request issue](https://github.com/FAIR2Adapt/fair-data-access/issues/new?template=access-request.yml) on GitHub:
 
 | Field | Example |
 |-------|---------|
 | Dataset ID | `hamburg-buildings` |
 | Your DID | `did:web:myuniversity.edu:researcher` |
-| Purpose | https://w3id.org/dpv#AcademicResearch |
+| Purpose | Academic Research |
 | Affiliation | University of Oslo |
 | Justification | Validating flood risk model for coastal cities... |
 
-The GitHub Actions workflow will automatically:
+## Step 4: Wait for the data provider to review
 
-1. Resolve your DID to get your public key
-2. Evaluate the dataset's ODRL policy against your request
-3. If approved: wrap the dataset key with your public key
-4. Record the access grant as a nanopublication (audit trail)
-5. Comment on the issue with your wrapped key URL
+Unlike automated systems, the data provider **manually reviews** each request and decides whether to approve it. If approved, they publish an **ODRL Access Grant for FAIR Data** nanopub — a cryptographically signed, immutable record that you have been authorized.
+
+The GitHub Actions workflow then automatically:
+
+1. Verifies the grant nanopub (checks signature and that the grant was published by the policy owner)
+2. Wraps the dataset key with your public key (from your DID)
+3. Deploys the wrapped key to GitHub Pages
+4. Comments on your issue with the download URL
 
 :::{note}
-The evaluation is fully automated. If your request matches the policy constraints (e.g., your stated purpose matches the required purpose), access is granted immediately.
+You will receive a GitHub notification when the issue is updated. If denied, the comment will explain why and suggest next steps.
 :::
 
 ## Step 5: Download and decrypt
 
 After approval, the issue comment will contain your wrapped key URL.
 
-### Download the encrypted data
-
-```bash
-# From Zenodo
-curl -L -o buildings.gpkg.enc \
-  https://zenodo.org/records/XXXXX/files/buildings.gpkg.enc
-```
-
-Or from S3 Pangeo@EOSC:
-
-```bash
-# Using s3cmd
-s3cmd get s3://fair2adapt/hamburg/buildings.gpkg.enc \
-  --host=s3.pangeo-eosc.eu
-```
-
-### Download your wrapped key
+### Download the wrapped key
 
 ```bash
 curl -o wrapped_key.json \
-  https://fair2adapt.github.io/fair-data-access/keys/<did-hash>/hamburg-buildings.key
+  "https://fair2adapt.github.io/fair-data-access/keys/<did-hash>/hamburg-buildings.key"
 ```
 
-The `<did-hash>` is the SHA-256 hash of your DID. The exact URL is provided in the GitHub issue comment.
+The exact URL is provided in the GitHub issue comment.
+
+### Download the encrypted data
+
+From S3 Pangeo@EOSC:
+
+```python
+import s3fs
+
+fs = s3fs.S3FileSystem(
+    anon=True,
+    client_kwargs={'endpoint_url': 'https://pangeo-eosc-minioapi.vm.fedcloud.eu/'}
+)
+fs.get('afouilloux-fair2adapt/buildings.fgb.enc', 'buildings.fgb.enc')
+```
 
 ### Decrypt
 
@@ -149,59 +136,59 @@ private_key = Path('~/.fair-data-access/private_key.pem').expanduser().read_byte
 dataset_key = unwrap_key(wrapped, private_key)
 
 # Decrypt the data file
-decrypt_file('buildings.gpkg.enc', key=dataset_key)
-print('Decrypted: buildings.gpkg')
+decrypt_file('buildings.fgb.enc', key=dataset_key)
+print('Decrypted: buildings.fgb')
 ```
 
-You now have `buildings.gpkg` ready to use.
-
-## Step 6: Use with the flood risk pipeline
-
-The [urban_pfr](https://github.com/FAIR2Adapt/urban_pfr_toolbox_hamburg) pipeline can handle encrypted inputs automatically in FDO mode:
-
-```bash
-# Place encrypted RO-Crate inputs in a directory
-# Each input has: ro-crate-metadata.json + *.enc files
-
-urban-pfr fdo --input-dir ./encrypted-inputs/ --output-dir ./outputs/
-```
-
-The pipeline will:
-1. Read each RO-Crate's `hasPolicy` → check the ODRL nanopub
-2. Fetch your wrapped key from the key server
-3. Decrypt inputs in memory
-4. Run the analysis
-5. Produce public (HEALPix-aggregated) and private (building-level) outputs
-
-## Cloud-native access via S3
-
-For large datasets, you can stream encrypted data directly from S3 without downloading the full file:
+### Or decrypt in memory (no temp files)
 
 ```python
-from fair_data_access.rocrate import load_encrypted_input
+from fair_data_access.encrypt import decrypt_bytes
 
-# crate_entry is the @graph entry for the encrypted file
-data_bytes = load_encrypted_input(
-    crate_entry=crate_entry,
-    private_key_pem=my_private_key,
-    s3_endpoint='https://s3.pangeo-eosc.eu',
-)
+# Read encrypted data (from local file or S3)
+encrypted_data = fs.cat('afouilloux-fair2adapt/buildings.fgb.enc')
 
-# Load into GeoPandas
+# Decrypt in memory
+decrypted_data = decrypt_bytes(encrypted_data, dataset_key)
+
+# Load directly into GeoPandas
 import geopandas as gpd
 import io
-gdf = gpd.read_file(io.BytesIO(data_bytes))
+gdf = gpd.read_file(io.BytesIO(decrypted_data))
 ```
+
+## Step 6: Verify your access grant
+
+You can independently verify that your access grant is legitimate:
+
+```python
+from fair_data_access.grant import verify_access
+
+result = verify_access(
+    dataset_uri='https://fair2adapt.eu/data/hamburg-buildings',
+    requester_did='did:web:myuniversity.edu:researcher',
+    policy_nanopub_uri='https://w3id.org/np/RAir7keZs8Jy7i8...',
+)
+
+print(f"Access granted: {result['granted']}")
+print(f"Grant nanopub: {result['grant_nanopub']}")
+print(f"Signature valid, creator authorized: {result['granted']}")
+```
+
+This checks:
+1. A valid grant nanopub exists on the nanopub network
+2. The grant's cryptographic signature is valid
+3. The grant was published by the same identity that published the policy
 
 ## Troubleshooting
 
 ### Access denied
 
-If your request is denied, the GitHub issue comment will explain why. Common reasons:
+The GitHub issue comment will explain why. Common reasons:
 
-- **Purpose mismatch**: Your stated purpose doesn't match the policy constraint (e.g., you said "Other" but the policy requires "https://w3id.org/dpv#AcademicResearch")
-- **DID not resolvable**: Your `did.json` is not accessible at the expected URL
-- **Dataset not found**: The dataset ID doesn't exist in the policy registry
+- **No grant found**: The data provider has not yet published an ODRL Access Grant for your request. Contact them directly.
+- **DID not resolvable**: Your `did.json` is not accessible at the expected URL.
+- **Dataset not found**: The dataset ID doesn't exist in the policy registry.
 
 ### DID resolution fails
 
@@ -219,4 +206,4 @@ curl https://myuniversity.edu/researcher/did.json
 ### Decryption fails
 
 - Make sure you're using the correct private key (the one matching the DID you used in the request)
-- Verify the wrapped key file downloaded correctly (should be valid JSON)
+- Verify the wrapped key file downloaded correctly (should be valid JSON with an `algorithm` field)
