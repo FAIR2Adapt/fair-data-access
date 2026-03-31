@@ -52,15 +52,11 @@ jobs:
       - name: Deploy wrapped key to GitHub Pages
         if: steps.evaluate.outputs.decision == 'permit'
         run: |
-          DID_HASH=$(echo -n "${{ steps.parse.outputs.did }}" | sha256sum | cut -d' ' -f1)
-          DATASET="${{ steps.parse.outputs.dataset }}"
-          mkdir -p docs/keys/${DID_HASH}
-          cp "${{ steps.wrap.outputs.wrapped_key_path }}" "docs/keys/${DID_HASH}/${DATASET}.key"
-
+          # The wrapped key is already at the right path from wrap_key_action.py
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add "docs/keys/${DID_HASH}/${DATASET}.key"
-          git commit -m "Grant access: ${DATASET} → ${{ steps.parse.outputs.did }}"
+          git add "${{ steps.wrap.outputs.wrapped_key_path }}"
+          git commit -m "Grant access: ${{ steps.parse.outputs.dataset }} → ${{ steps.parse.outputs.did }}"
           git push
 
       - name: Comment on issue (approved)
