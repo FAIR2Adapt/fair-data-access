@@ -17,7 +17,13 @@ This tool is designed for data that is **private but not sensitive** — data th
 
 ## Quick start
 
-::::{grid} 1 1 2 2
+::::{grid} 1 1 3 3
+
+:::{card} Try the walkthrough
+:link: /walkthrough/intro.html
+
+**Reproducible Walkthrough** — End-to-end example with synthetic data: encrypt, publish ODRL policy, wrap key, decrypt. Runs in 15 minutes.
+:::
 
 :::{card} I have data to share
 :link: tutorial-provider.md
@@ -52,8 +58,10 @@ This tool is designed for data that is **private but not sensitive** — data th
 
 ## Links
 
+- [Reproducible walkthrough](https://fair2adapt.github.io/fair-data-access/walkthrough/) — end-to-end ODRL access control with synthetic data
 - [Source code](https://github.com/FAIR2Adapt/fair-data-access)
 - [Flood risk toolbox](https://github.com/FAIR2Adapt/urban_pfr_toolbox_hamburg)
 - [FAIR2Adapt project](https://fair2adapt-eosc.eu)
+- [Science Live platform](https://platform.sciencelive4all.org) — user-friendly nanopub creation and viewing
 - [ODRL specification](https://www.w3.org/TR/odrl-model/)
 - [Nanopublications](https://nanopub.net/)
