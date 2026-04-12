@@ -20,7 +20,7 @@ This tool is designed for data that is **private but not sensitive** — data th
 ::::{grid} 1 1 3 3
 
 :::{card} Try the walkthrough
-:link: /walkthrough/intro.html
+:link: https://fair2adapt.github.io/fair-data-access/walkthrough/
 
 **Reproducible Walkthrough** — End-to-end example with synthetic data: encrypt, publish ODRL policy, wrap key, decrypt. Runs in 15 minutes.
 :::

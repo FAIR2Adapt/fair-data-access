@@ -54,6 +54,8 @@ jobs:
 
       - name: Build walkthrough
         working-directory: examples/walkthrough
+        env:
+          BASE_URL: /fair-data-access/walkthrough
         run: |
           # Convert .py to .ipynb (not executed — no private keys in Pages deploy)
           for nb in 00_setup_did 01_provider 02_consumer; do
