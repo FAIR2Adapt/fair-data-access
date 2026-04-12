@@ -34,7 +34,7 @@ and decrypt the dataset. Verify the access grant nanopublication for audit.
 
 ## How ODRL access control works
 
-![How it works: Data Provider encrypts and publishes, the framework evaluates the ODRL policy and wraps the key, Data Consumer decrypts and runs analysis](images/how-it-works.svg)
+![How ODRL access control works: Provider encrypts and publishes policy, Framework evaluates and wraps key, Consumer unwraps and decrypts](images/how-it-works-simplified.svg)
 
 Every step that produces a nanopublication creates a **signed, immutable,
 auditable record** on the decentralised nanopub network. The provider can

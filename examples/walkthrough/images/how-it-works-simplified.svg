@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 360" font-family="Quicksand, sans-serif">
+
+  <!-- Background -->
+  <rect width="900" height="360" rx="12" fill="#f8fafa"/>
+
+  <!-- Arrowhead definitions -->
+  <defs>
+    <marker id="arrowTeal" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#1D6886"/>
+    </marker>
+    <marker id="arrowOrange" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6" fill="#f3953f"/>
+    </marker>
+  </defs>
+
+  <!-- Column 1: Data Provider -->
+  <rect x="20" y="15" width="260" height="330" rx="10" fill="#1D6886" opacity="0.07" stroke="#1D6886" stroke-width="1.5"/>
+  <text x="150" y="45" text-anchor="middle" font-size="14" font-weight="700" fill="#1D6886">DATA PROVIDER</text>
+
+  <rect x="40" y="65" width="220" height="50" rx="8" fill="white" stroke="#1D6886" stroke-width="1.5"/>
+  <text x="150" y="88" text-anchor="middle" font-size="13" font-weight="600" fill="#32373c">Encrypt dataset</text>
+  <text x="150" y="104" text-anchor="middle" font-size="10" fill="#888">AES-256-GCM</text>
+
+  <line x1="150" y1="115" x2="150" y2="135" stroke="#1D6886" stroke-width="1.5" marker-end="url(#arrowTeal)"/>
+
+  <rect x="40" y="140" width="220" height="50" rx="8" fill="white" stroke="#1D6886" stroke-width="1.5"/>
+  <text x="150" y="163" text-anchor="middle" font-size="13" font-weight="600" fill="#32373c">Publish ODRL policy</text>
+  <text x="150" y="179" text-anchor="middle" font-size="10" fill="#888">signed nanopublication</text>
+
+  <line x1="150" y1="190" x2="150" y2="210" stroke="#1D6886" stroke-width="1.5" marker-end="url(#arrowTeal)"/>
+
+  <rect x="40" y="215" width="220" height="50" rx="8" fill="white" stroke="#1D6886" stroke-width="1.5"/>
+  <text x="150" y="244" text-anchor="middle" font-size="13" font-weight="600" fill="#32373c">Store dataset key</text>
+
+  <!-- Column 2: Framework -->
+  <rect x="320" y="15" width="260" height="330" rx="10" fill="#184383" opacity="0.06" stroke="#184383" stroke-width="1.5"/>
+  <text x="450" y="45" text-anchor="middle" font-size="14" font-weight="700" fill="#184383">ACCESS CONTROL</text>
+
+  <rect x="340" y="65" width="220" height="50" rx="8" fill="white" stroke="#184383" stroke-width="1.5"/>
+  <text x="450" y="88" text-anchor="middle" font-size="13" font-weight="600" fill="#32373c">Evaluate ODRL policy</text>
+  <text x="450" y="104" text-anchor="middle" font-size="10" fill="#888">check purpose constraint</text>
+
+  <line x1="450" y1="115" x2="450" y2="135" stroke="#184383" stroke-width="1.5" marker-end="url(#arrowTeal)"/>
+
+  <rect x="340" y="140" width="220" height="50" rx="8" fill="white" stroke="#184383" stroke-width="1.5"/>
+  <text x="450" y="163" text-anchor="middle" font-size="13" font-weight="600" fill="#32373c">Wrap key for consumer</text>
+  <text x="450" y="179" text-anchor="middle" font-size="10" fill="#888">ECDH + AES-GCM</text>
+
+  <line x1="450" y1="190" x2="450" y2="210" stroke="#184383" stroke-width="1.5" marker-end="url(#arrowTeal)"/>
+
+  <rect x="340" y="215" width="220" height="50" rx="8" fill="white" stroke="#184383" stroke-width="1.5"/>
+  <text x="450" y="238" text-anchor="middle" font-size="13" font-weight="600" fill="#32373c">Publish access grant</text>
+  <text x="450" y="254" text-anchor="middle" font-size="10" fill="#888">nanopub audit trail</text>
+
+  <!-- Column 3: Data Consumer -->
+  <rect x="620" y="15" width="260" height="330" rx="10" fill="#f3953f" opacity="0.08" stroke="#f3953f" stroke-width="1.5"/>
+  <text x="750" y="45" text-anchor="middle" font-size="14" font-weight="700" fill="#e84e0e">DATA CONSUMER</text>
+
+  <rect x="640" y="65" width="220" height="50" rx="8" fill="white" stroke="#f3953f" stroke-width="1.5"/>
+  <text x="750" y="88" text-anchor="middle" font-size="13" font-weight="600" fill="#32373c">Set up DID identity</text>
+  <text x="750" y="104" text-anchor="middle" font-size="10" fill="#888">one-time keypair + publish</text>
+
+  <line x1="750" y1="115" x2="750" y2="135" stroke="#f3953f" stroke-width="1.5" marker-end="url(#arrowOrange)"/>
+
+  <rect x="640" y="140" width="220" height="50" rx="8" fill="white" stroke="#f3953f" stroke-width="1.5"/>
+  <text x="750" y="163" text-anchor="middle" font-size="13" font-weight="600" fill="#32373c">Unwrap dataset key</text>
+  <text x="750" y="179" text-anchor="middle" font-size="10" fill="#888">with private key</text>
+
+  <line x1="750" y1="190" x2="750" y2="210" stroke="#f3953f" stroke-width="1.5" marker-end="url(#arrowOrange)"/>
+
+  <rect x="640" y="215" width="220" height="50" rx="8" fill="white" stroke="#f3953f" stroke-width="1.5"/>
+  <text x="750" y="244" text-anchor="middle" font-size="13" font-weight="600" fill="#32373c">Decrypt and use data</text>
+
+  <!-- Cross-column arrows -->
+  <!-- Provider policy → Framework evaluate -->
+  <path d="M260,165 L340,90" fill="none" stroke="#1D6886" stroke-width="2" marker-end="url(#arrowTeal)"/>
+
+  <!-- Framework grant → Consumer unwrap -->
+  <path d="M560,240 L640,165" fill="none" stroke="#f3953f" stroke-width="2" marker-end="url(#arrowOrange)"/>
+
+  <!-- Consumer DID → Framework evaluate (request) -->
+  <path d="M640,90 L560,90" fill="none" stroke="#f3953f" stroke-width="2" stroke-dasharray="6,3" marker-end="url(#arrowTeal)"/>
+  <text x="600" y="82" text-anchor="middle" font-size="9" fill="#888">request</text>
+
+</svg>
