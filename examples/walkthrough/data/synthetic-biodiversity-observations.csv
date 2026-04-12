@@ -1,0 +1,26 @@
+# SYNTHETIC DEMO DATA — NOT REAL OBSERVATIONS
+# Generated for the FAIR2Adapt public demo. Every row is fabricated.
+# Species and locations are plausible for the Mediterranean coast but
+# no actual survey was conducted. Do not cite or use for research.
+# See ./README.md for details.
+observation_id,scientific_name,common_name,latitude,longitude,observation_date,observer_id,count,habitat,notes
+demo-obs-001,Posidonia oceanica,Neptune grass,43.2965,5.3698,2026-03-15,demo-observer-A,1,seagrass_meadow,synthetic demo record — healthy patch ~200sqm
+demo-obs-002,Caretta caretta,Loggerhead sea turtle,43.2978,5.3712,2026-03-15,demo-observer-A,2,coastal_open_water,synthetic demo record — adult females
+demo-obs-003,Posidonia oceanica,Neptune grass,43.3015,5.3755,2026-03-16,demo-observer-A,1,seagrass_meadow,synthetic demo record — fragmented
+demo-obs-004,Pinna nobilis,Noble pen shell,43.2989,5.3701,2026-03-16,demo-observer-B,4,rocky_seabed,synthetic demo record — juveniles
+demo-obs-005,Epinephelus marginatus,Dusky grouper,43.3022,5.3760,2026-03-17,demo-observer-B,1,rocky_reef,synthetic demo record — adult ~80cm
+demo-obs-006,Tursiops truncatus,Bottlenose dolphin,43.3101,5.3820,2026-03-17,demo-observer-C,7,coastal_open_water,synthetic demo record — pod with 2 calves
+demo-obs-007,Paracentrotus lividus,Purple sea urchin,43.2991,5.3702,2026-03-18,demo-observer-B,42,rocky_intertidal,synthetic demo record — high density quadrat
+demo-obs-008,Pinna nobilis,Noble pen shell,43.3004,5.3728,2026-03-18,demo-observer-B,2,rocky_seabed,synthetic demo record — adults with epiphytes
+demo-obs-009,Posidonia oceanica,Neptune grass,43.2958,5.3682,2026-03-19,demo-observer-A,1,seagrass_meadow,synthetic demo record — reference control site
+demo-obs-010,Carcharhinus plumbeus,Sandbar shark,43.3150,5.3901,2026-03-19,demo-observer-C,1,coastal_open_water,synthetic demo record — passing individual
+demo-obs-011,Diplodus sargus,White seabream,43.3015,5.3755,2026-03-20,demo-observer-B,15,rocky_reef,synthetic demo record — juvenile school
+demo-obs-012,Paracentrotus lividus,Purple sea urchin,43.3001,5.3715,2026-03-20,demo-observer-B,28,rocky_intertidal,synthetic demo record — quadrat count
+demo-obs-013,Caretta caretta,Loggerhead sea turtle,43.2980,5.3710,2026-03-21,demo-observer-A,1,coastal_open_water,synthetic demo record — feeding on jellyfish
+demo-obs-014,Epinephelus marginatus,Dusky grouper,43.3018,5.3762,2026-03-21,demo-observer-B,1,rocky_reef,synthetic demo record
+demo-obs-015,Posidonia oceanica,Neptune grass,43.2972,5.3694,2026-03-22,demo-observer-A,1,seagrass_meadow,synthetic demo record — extensive meadow
+demo-obs-016,Dentex dentex,Common dentex,43.3045,5.3785,2026-03-22,demo-observer-B,3,rocky_reef,synthetic demo record — hunting group
+demo-obs-017,Pinna nobilis,Noble pen shell,43.2996,5.3705,2026-03-23,demo-observer-B,1,rocky_seabed,synthetic demo record — dead shell
+demo-obs-018,Tursiops truncatus,Bottlenose dolphin,43.3120,5.3855,2026-03-23,demo-observer-C,5,coastal_open_water,synthetic demo record — pod
+demo-obs-019,Diplodus sargus,White seabream,43.3019,5.3758,2026-03-24,demo-observer-B,22,rocky_reef,synthetic demo record — mixed size class
+demo-obs-020,Paracentrotus lividus,Purple sea urchin,43.3005,5.3720,2026-03-24,demo-observer-B,35,rocky_intertidal,synthetic demo record — quadrat count

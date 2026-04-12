@@ -1,0 +1,6 @@
+format: jb-book
+root: intro
+chapters:
+  - file: 00_setup_did
+  - file: 01_provider
+  - file: 02_consumer

@@ -1,0 +1,26 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/did/v1",
+    "https://w3id.org/security/suites/jws-2020/v1"
+  ],
+  "id": "did:web:fair2adapt.github.io:fair-data-access:example-consumer",
+  "verificationMethod": [
+    {
+      "id": "did:web:fair2adapt.github.io:fair-data-access:example-consumer#key-1",
+      "type": "JsonWebKey2020",
+      "controller": "did:web:fair2adapt.github.io:fair-data-access:example-consumer",
+      "publicKeyJwk": {
+        "kty": "EC",
+        "crv": "P-256",
+        "x": "2OyUBGxbSw4NaV_-XT5qTQwZSIAdA4hFYxiUIiWOTXw",
+        "y": "hsn7gogSYPnx_6zWXxzMYE9nhSvJJDqdkfWHBTUbmrM"
+      }
+    }
+  ],
+  "authentication": [
+    "did:web:fair2adapt.github.io:fair-data-access:example-consumer#key-1"
+  ],
+  "assertionMethod": [
+    "did:web:fair2adapt.github.io:fair-data-access:example-consumer#key-1"
+  ]
+}
