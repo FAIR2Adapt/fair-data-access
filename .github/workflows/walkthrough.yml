@@ -30,18 +30,16 @@ jobs:
           pip install -e .
           pip install jupytext jupyter-book pandas
 
-      - name: Generate jupytext notebooks
-        working-directory: examples/walkthrough
-        run: jupytext --sync *.py
-
-      - name: Run notebooks (smoke test)
+      - name: Convert .py to .ipynb and execute (smoke test)
         working-directory: examples/walkthrough
         run: |
-          jupyter nbconvert --execute --to notebook \
-            --output-dir=/tmp/executed \
-            00_setup_did.ipynb \
-            01_provider.ipynb \
-            02_consumer.ipynb
+          for nb in 00_setup_did 01_provider 02_consumer; do
+            echo "=== Converting and executing ${nb}.py ==="
+            jupytext --to notebook "${nb}.py"
+            jupyter nbconvert --execute --to notebook \
+              --output-dir=/tmp/executed \
+              "${nb}.ipynb"
+          done
 
       - name: Build Jupyter-book
         working-directory: examples/walkthrough
