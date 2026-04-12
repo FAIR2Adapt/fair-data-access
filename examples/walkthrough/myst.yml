@@ -17,3 +17,7 @@ project:
     - file: 02_consumer
 site:
   template: book-theme
+  options:
+    favicon: https://fair2adapt-eosc.eu/wp-content/uploads/2025/04/favicon.jpg
+    logo: https://fair2adapt-eosc.eu/wp-content/uploads/2025/02/FAIR2Adapt_logo-1024x183.png
+    logo_dark: https://fair2adapt-eosc.eu/wp-content/uploads/2025/02/FAIR2Adapt_White-1024x183.png

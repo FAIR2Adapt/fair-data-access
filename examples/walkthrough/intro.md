@@ -34,22 +34,7 @@ and decrypt the dataset. Verify the access grant nanopublication for audit.
 
 ## How ODRL access control works
 
-```
-Provider                              Consumer
-────────                              ────────
-1. Encrypt dataset                    1. Generate DID keypair (once)
-2. Publish ODRL policy nanopub        2. Publish DID document
-3. Store dataset key privately        3. Request access (with DID + purpose)
-                                         │
-4. Evaluate policy ← ─ ─ ─ ─ ─ ─ ─ ─ ─ ┘
-5. Wrap dataset key for consumer's
-   public key (ECDH + AES-GCM)
-6. Publish access grant nanopub
-7. Serve wrapped key                  4. Download wrapped key
-                                      5. Unwrap with private key
-                                      6. Decrypt dataset
-                                      7. Use the data ✓
-```
+![How it works: Data Provider encrypts and publishes, GitHub Actions evaluates ODRL policy and wraps key, Data Consumer decrypts and runs analysis](images/how-it-works.svg)
 
 Every step that produces a nanopublication creates a **signed, immutable,
 auditable record** on the decentralised nanopub network. The provider can
