@@ -44,7 +44,7 @@ jobs:
       - name: Install Python dependencies (for walkthrough)
         run: |
           pip install -e .
-          pip install jupytext jupyter-book pandas
+          pip install jupytext pandas
 
       - name: Build main docs site
         working-directory: docs
@@ -52,14 +52,14 @@ jobs:
           BASE_URL: /fair-data-access
         run: myst build --html
 
-      - name: Build walkthrough Jupyter-book
+      - name: Build walkthrough
         working-directory: examples/walkthrough
         run: |
-          # Convert .py to .ipynb (do not execute — no private keys in Pages deploy)
+          # Convert .py to .ipynb (not executed — no private keys in Pages deploy)
           for nb in 00_setup_did 01_provider 02_consumer; do
             jupytext --to notebook "${nb}.py"
           done
-          jupyter-book build .
+          myst build --html
 
       - name: Copy static files (DID documents, keys)
         run: |

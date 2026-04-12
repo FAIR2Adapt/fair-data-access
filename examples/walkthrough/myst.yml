@@ -1,0 +1,19 @@
+version: 1
+project:
+  id: fair2adapt-walkthrough
+  title: FAIR2Adapt Walkthrough — ODRL Access Control
+  description: A reproducible walkthrough of the FAIR2Adapt access control framework
+  github: https://github.com/FAIR2Adapt/fair-data-access
+  keywords:
+    - ODRL
+    - FAIR data
+    - access control
+    - nanopublications
+    - DID
+  toc:
+    - file: intro.md
+    - file: 00_setup_did
+    - file: 01_provider
+    - file: 02_consumer
+site:
+  template: book-theme

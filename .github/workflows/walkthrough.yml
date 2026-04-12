@@ -28,7 +28,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e .
-          pip install jupytext jupyter-book pandas
+          pip install jupytext pandas
 
       - name: Write private keys from secrets
         working-directory: examples/walkthrough
@@ -51,9 +51,11 @@ jobs:
               "${nb}.ipynb"
           done
 
-      - name: Build Jupyter-book
+      - name: Build walkthrough site
         working-directory: examples/walkthrough
-        run: jupyter-book build .
+        run: |
+          npm install -g mystmd
+          myst build --html
 
       - name: Upload book artifact
         uses: actions/upload-artifact@v4
