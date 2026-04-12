@@ -1,0 +1,53 @@
+{
+  "@context": "http://www.w3.org/ns/odrl.jsonld",
+  "@type": "Offer",
+  "uid": "https://fair2adapt.eu/policy/walkthrough-biodiversity",
+  "_nanopub_uri": "https://w3id.org/np/RATzaPLmaUtrmZ6w9WILh8jxF3F-e23xPrFHJQFO3-U6Y",
+  "_note": "The nanopub_uri above is the published nanopublication of this policy on the nanopub network.",
+  "permission": [
+    {
+      "target": "https://fair2adapt.eu/data/walkthrough-biodiversity",
+      "action": "use",
+      "constraint": [
+        {
+          "leftOperand": "purpose",
+          "operator": "eq",
+          "rightOperand": {
+            "@id": "https://w3id.org/dpv#PublicBenefit"
+          }
+        }
+      ]
+    },
+    {
+      "target": "https://fair2adapt.eu/data/walkthrough-biodiversity",
+      "action": "reproduce",
+      "constraint": [
+        {
+          "leftOperand": "purpose",
+          "operator": "eq",
+          "rightOperand": {
+            "@id": "https://w3id.org/dpv#PublicBenefit"
+          }
+        }
+      ]
+    }
+  ],
+  "prohibition": [
+    {
+      "target": "https://fair2adapt.eu/data/walkthrough-biodiversity",
+      "action": "commercialize"
+    },
+    {
+      "target": "https://fair2adapt.eu/data/walkthrough-biodiversity",
+      "action": "sell"
+    }
+  ],
+  "obligation": [
+    {
+      "action": "attribute",
+      "attributedParty": {
+        "@id": "https://fair2adapt-eosc.eu"
+      }
+    }
+  ]
+}

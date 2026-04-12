@@ -1,0 +1,2 @@
+# Private keys are NEVER committed — generated locally on first notebook run
+*_private.pem

@@ -1,0 +1,63 @@
+name: Test and build walkthrough
+
+on:
+  push:
+    branches: [main, feature/public-demo]
+    paths:
+      - 'examples/walkthrough/**'
+      - 'fair_data_access/**'
+  pull_request:
+    paths:
+      - 'examples/walkthrough/**'
+      - 'fair_data_access/**'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install jupytext jupyter-book pandas
+
+      - name: Write private keys from secrets
+        working-directory: examples/walkthrough
+        env:
+          EXAMPLE_CONSUMER_PRIVATE_KEY: ${{ secrets.EXAMPLE_CONSUMER_PRIVATE_KEY }}
+          EXAMPLE_PROVIDER_PRIVATE_KEY: ${{ secrets.EXAMPLE_PROVIDER_PRIVATE_KEY }}
+        run: |
+          printenv EXAMPLE_CONSUMER_PRIVATE_KEY > keys/example-consumer-private.pem
+          printenv EXAMPLE_PROVIDER_PRIVATE_KEY > keys/example-provider-private.pem
+          chmod 600 keys/*-private.pem
+
+      - name: Convert .py to .ipynb and execute (smoke test)
+        working-directory: examples/walkthrough
+        run: |
+          for nb in 00_setup_did 01_provider 02_consumer; do
+            echo "=== Converting and executing ${nb}.py ==="
+            jupytext --to notebook "${nb}.py"
+            jupyter nbconvert --execute --to notebook \
+              --output-dir=/tmp/executed \
+              "${nb}.ipynb"
+          done
+
+      - name: Build Jupyter-book
+        working-directory: examples/walkthrough
+        run: jupyter-book build .
+
+      - name: Upload book artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: walkthrough-book
+          path: examples/walkthrough/_build/html
+          retention-days: 14

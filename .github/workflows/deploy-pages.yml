@@ -41,9 +41,14 @@ jobs:
           BASE_URL: /fair-data-access
         run: myst build --html
 
-      - name: Copy static files (DID document, keys)
+      - name: Copy static files (DID documents, keys)
         run: |
           cp docs/did.json docs/_build/html/did.json
+          # Copy example consumer DID for walkthrough
+          if [ -d docs/example-consumer ]; then
+            mkdir -p docs/_build/html/example-consumer
+            cp docs/example-consumer/did.json docs/_build/html/example-consumer/did.json
+          fi
           # Copy any existing wrapped keys
           if [ -d docs/keys ]; then
             cp -r docs/keys docs/_build/html/keys
