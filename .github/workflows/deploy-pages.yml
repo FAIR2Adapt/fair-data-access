@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - 'docs/**'
+      - 'examples/walkthrough/**'
 
   # Allow manual trigger
   workflow_dispatch:
@@ -32,14 +33,33 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
       - name: Install MyST-MD
         run: npm install -g mystmd
 
-      - name: Build site
+      - name: Install Python dependencies (for walkthrough)
+        run: |
+          pip install -e .
+          pip install jupytext jupyter-book pandas
+
+      - name: Build main docs site
         working-directory: docs
         env:
           BASE_URL: /fair-data-access
         run: myst build --html
+
+      - name: Build walkthrough Jupyter-book
+        working-directory: examples/walkthrough
+        run: |
+          # Convert .py to .ipynb (do not execute — no private keys in Pages deploy)
+          for nb in 00_setup_did 01_provider 02_consumer; do
+            jupytext --to notebook "${nb}.py"
+          done
+          jupyter-book build .
 
       - name: Copy static files (DID documents, keys)
         run: |
@@ -53,6 +73,11 @@ jobs:
           if [ -d docs/keys ]; then
             cp -r docs/keys docs/_build/html/keys
           fi
+
+      - name: Copy walkthrough book into Pages site
+        run: |
+          mkdir -p docs/_build/html/walkthrough
+          cp -r examples/walkthrough/_build/html/* docs/_build/html/walkthrough/
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
