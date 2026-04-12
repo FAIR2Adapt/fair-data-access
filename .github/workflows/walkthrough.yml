@@ -30,6 +30,16 @@ jobs:
           pip install -e .
           pip install jupytext jupyter-book pandas
 
+      - name: Write private keys from secrets
+        working-directory: examples/walkthrough
+        env:
+          EXAMPLE_CONSUMER_PRIVATE_KEY: ${{ secrets.EXAMPLE_CONSUMER_PRIVATE_KEY }}
+          EXAMPLE_PROVIDER_PRIVATE_KEY: ${{ secrets.EXAMPLE_PROVIDER_PRIVATE_KEY }}
+        run: |
+          printenv EXAMPLE_CONSUMER_PRIVATE_KEY > keys/example-consumer-private.pem
+          printenv EXAMPLE_PROVIDER_PRIVATE_KEY > keys/example-provider-private.pem
+          chmod 600 keys/*-private.pem
+
       - name: Convert .py to .ipynb and execute (smoke test)
         working-directory: examples/walkthrough
         run: |

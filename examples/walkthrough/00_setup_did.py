@@ -75,12 +75,28 @@ if CONSUMER_PRIVATE_KEY.exists():
     private_pem = CONSUMER_PRIVATE_KEY.read_bytes()
     public_pem = CONSUMER_PUBLIC_KEY.read_bytes()
 else:
-    print("Generating a new consumer keypair...")
-    private_pem, public_pem = generate_did_keypair()
-    CONSUMER_PRIVATE_KEY.write_bytes(private_pem)
-    CONSUMER_PUBLIC_KEY.write_bytes(public_pem)
-    print(f"Saved private key to {CONSUMER_PRIVATE_KEY} (gitignored)")
-    print(f"Saved public key to {CONSUMER_PUBLIC_KEY}")
+    # In the real workflow, you generate your keypair ONCE and store the
+    # private key securely (e.g. as a GitHub Secret, in a password manager,
+    # or on an encrypted drive). You never regenerate it — losing it means
+    # losing your identity and access to any data wrapped for you.
+    #
+    # For this walkthrough, the private key is stored as a GitHub Secret
+    # (EXAMPLE_CONSUMER_PRIVATE_KEY) and written to disk by CI before the
+    # notebooks run. If you're running locally for the first time, generate
+    # your own keypair by uncommenting the lines below:
+    #
+    #   private_pem, public_pem = generate_did_keypair()
+    #   CONSUMER_PRIVATE_KEY.write_bytes(private_pem)
+    #   CONSUMER_PUBLIC_KEY.write_bytes(public_pem)
+    #
+    raise FileNotFoundError(
+        f"Consumer private key not found at {CONSUMER_PRIVATE_KEY}.\n"
+        "If running locally for the first time, generate a keypair:\n"
+        "  from fair_data_access.keys import generate_did_keypair\n"
+        "  private, public = generate_did_keypair()\n"
+        "  Path('keys/example-consumer-private.pem').write_bytes(private)\n"
+        "Or set the EXAMPLE_CONSUMER_PRIVATE_KEY environment variable."
+    )
 
 # %%
 # Show the public key (this is safe to share — it's public by design)
