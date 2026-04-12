@@ -1,0 +1,55 @@
+name: Test and build walkthrough
+
+on:
+  push:
+    branches: [main, feature/public-demo]
+    paths:
+      - 'examples/walkthrough/**'
+      - 'fair_data_access/**'
+  pull_request:
+    paths:
+      - 'examples/walkthrough/**'
+      - 'fair_data_access/**'
+
+  # Allow manual trigger
+  workflow_dispatch:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: |
+          pip install -e .
+          pip install jupytext jupyter-book pandas
+
+      - name: Generate jupytext notebooks
+        working-directory: examples/walkthrough
+        run: jupytext --sync *.py
+
+      - name: Run notebooks (smoke test)
+        working-directory: examples/walkthrough
+        run: |
+          jupyter nbconvert --execute --to notebook \
+            --output-dir=/tmp/executed \
+            00_setup_did.ipynb \
+            01_provider.ipynb \
+            02_consumer.ipynb
+
+      - name: Build Jupyter-book
+        working-directory: examples/walkthrough
+        run: jupyter-book build .
+
+      - name: Upload book artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: walkthrough-book
+          path: examples/walkthrough/_build/html
+          retention-days: 14
