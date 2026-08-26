@@ -16,11 +16,11 @@ authors:
 repository-code: "https://github.com/FAIR2Adapt/fair-data-access"
 url: "https://fair2adapt.github.io/fair-data-access/"
 license: Apache-2.0
-version: "0.1.0"
+version: "0.2.0"
 # NOTE: date-released and the DOI identifiers below are filled at release time
 # (Phase 4). doi: is the CONCEPT DOI (resolves to the latest version — cite the
 # project). Version DOIs (which nanopubs must cite) are added per release.
-# date-released: "YYYY-MM-DD"
+date-released: "2026-08-26"
 # doi: "<zenodo-concept-doi>"
 # identifiers:
 #   - type: doi
