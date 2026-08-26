@@ -1,0 +1,121 @@
+{
+  "@context": "https://w3id.org/ro/crate/1.1/context",
+  "@graph": [
+    {
+      "@type": "CreativeWork",
+      "@id": "ro-crate-metadata.json",
+      "conformsTo": { "@id": "https://w3id.org/ro/crate/1.1" },
+      "about": { "@id": "./" }
+    },
+    {
+      "@type": "Dataset",
+      "@id": "./",
+      "name": "fair-data-access",
+      "description": "ODRL-based access control for FAIR Digital Objects, with nanopublication policies/grants, DIDs and authenticated encryption, plus a reproducible synthetic demonstration.",
+      "license": { "@id": "https://spdx.org/licenses/Apache-2.0" },
+      "author": { "@id": "https://orcid.org/0000-0002-1784-2920" },
+      "publisher": { "@id": "https://fair2adapt-eosc.eu" },
+      "datePublished": "2026",
+      "hasPart": [
+        { "@id": "fair_data_access/" },
+        { "@id": "examples/walkthrough/" },
+        { "@id": "examples/walkthrough/data/synthetic-biodiversity-observations.csv" },
+        { "@id": "examples/walkthrough/policies/example-policy.jsonld" },
+        { "@id": "Snakefile" },
+        { "@id": "pixi.toml" },
+        { "@id": "https://w3id.org/np/RATzaPLmaUtrmZ6w9WILh8jxF3F-e23xPrFHJQFO3-U6Y" },
+        { "@id": "https://w3id.org/np/RARNOf26WWMYa0BkLWpMURNRqjwSVGXj-4A9r9iCBpruM" }
+      ],
+      "mainEntity": { "@id": "fair_data_access/" },
+      "mentions": [
+        { "@id": "https://w3id.org/np/RAir7keZs8Jy7i8HvRI7X4SmefJtY3jG2WgyFlsZa9-iw" },
+        { "@id": "https://w3id.org/np/RAABfWGtaYJE4YiMfzetpUe_KOupSEAiulFwMRcLcgZys" }
+      ]
+    },
+    {
+      "@type": ["SoftwareSourceCode", "SoftwareApplication"],
+      "@id": "fair_data_access/",
+      "name": "fair-data-access (Python package)",
+      "programmingLanguage": "Python",
+      "codeRepository": "https://github.com/FAIR2Adapt/fair-data-access",
+      "license": { "@id": "https://spdx.org/licenses/Apache-2.0" }
+    },
+    {
+      "@type": "Dataset",
+      "@id": "examples/walkthrough/",
+      "name": "Reproducible synthetic walkthrough",
+      "description": "End-to-end demonstration: encrypt → ODRL policy → DID key-wrap → nanopublication grant → decrypt, on a synthetic dataset using the same code paths as the Hamburg deployment."
+    },
+    {
+      "@type": "File",
+      "@id": "examples/walkthrough/data/synthetic-biodiversity-observations.csv",
+      "name": "Synthetic biodiversity observations (demo plaintext input)",
+      "encodingFormat": "text/csv",
+      "description": "Fabricated Mediterranean biodiversity observations — no real observational data; used only as demo input to the encrypt–grant–decrypt loop."
+    },
+    {
+      "@type": "File",
+      "@id": "examples/walkthrough/policies/example-policy.jsonld",
+      "name": "Example ODRL access policy",
+      "encodingFormat": "application/ld+json"
+    },
+    {
+      "@type": "File",
+      "@id": "Snakefile",
+      "name": "Snakemake pipeline (reproducible demo driver)",
+      "encodingFormat": "text/x-snakemake"
+    },
+    {
+      "@type": "File",
+      "@id": "pixi.toml",
+      "name": "pixi environment definition",
+      "encodingFormat": "text/toml"
+    },
+    {
+      "@type": "CreativeWork",
+      "@id": "https://w3id.org/np/RATzaPLmaUtrmZ6w9WILh8jxF3F-e23xPrFHJQFO3-U6Y",
+      "name": "ODRL access policy nanopublication (reproducible demo)",
+      "license": { "@id": "https://creativecommons.org/licenses/by/4.0/" }
+    },
+    {
+      "@type": "CreativeWork",
+      "@id": "https://w3id.org/np/RARNOf26WWMYa0BkLWpMURNRqjwSVGXj-4A9r9iCBpruM",
+      "name": "Access grant nanopublication (reproducible demo)",
+      "license": { "@id": "https://creativecommons.org/licenses/by/4.0/" }
+    },
+    {
+      "@type": "CreativeWork",
+      "@id": "https://w3id.org/np/RAir7keZs8Jy7i8HvRI7X4SmefJtY3jG2WgyFlsZa9-iw",
+      "name": "ODRL access policy nanopublication (Hamburg building-level dataset)",
+      "license": { "@id": "https://creativecommons.org/licenses/by/4.0/" }
+    },
+    {
+      "@type": "CreativeWork",
+      "@id": "https://w3id.org/np/RAABfWGtaYJE4YiMfzetpUe_KOupSEAiulFwMRcLcgZys",
+      "name": "Access grant nanopublication (Hamburg building-level dataset)",
+      "license": { "@id": "https://creativecommons.org/licenses/by/4.0/" }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://orcid.org/0000-0002-1784-2920",
+      "name": "Anne Fouilloux",
+      "affiliation": { "@id": "https://www.lifewatch.eu" }
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://www.lifewatch.eu",
+      "name": "LifeWatch ERIC"
+    },
+    {
+      "@type": "Organization",
+      "@id": "https://fair2adapt-eosc.eu",
+      "name": "FAIR2Adapt",
+      "identifier": "https://doi.org/10.3030/101188256"
+    },
+    {
+      "@type": "CreativeWork",
+      "@id": "https://spdx.org/licenses/Apache-2.0",
+      "name": "Apache License 2.0"
+    }
+  ]
+}

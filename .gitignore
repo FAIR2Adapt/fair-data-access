@@ -12,3 +12,9 @@ docs/keys/
 docs/_build/
 .ipynb_checkpoints/
 nanopubs/output/
+
+# pixi environment (the solved env — do NOT ignore pixi.lock, it must be committed)
+.pixi/
+# Snakemake pipeline outputs / run markers
+results/
+.snakemake/

@@ -1,0 +1,51 @@
+cff-version: 1.2.0
+title: "fair-data-access"
+message: "If you use this software, please cite it as below."
+type: software
+abstract: >-
+  A method and open-source implementation for expressing and enforcing access to
+  sensitive FAIR Digital Objects, combining ODRL policies, nanopublication-based
+  access grants, Decentralized Identifiers (DIDs) and authenticated encryption
+  (AES-256-GCM with ECDH/HKDF key wrapping). Developed in the FAIR2Adapt project
+  for controlled-access climate change adaptation data.
+authors:
+  - family-names: "Fouilloux"
+    given-names: "Anne"
+    orcid: "https://orcid.org/0000-0002-1784-2920"
+    affiliation: "LifeWatch ERIC"
+repository-code: "https://github.com/FAIR2Adapt/fair-data-access"
+url: "https://fair2adapt.github.io/fair-data-access/"
+license: Apache-2.0
+version: "0.1.0"
+# NOTE: date-released and the DOI identifiers below are filled at release time
+# (Phase 4). doi: is the CONCEPT DOI (resolves to the latest version — cite the
+# project). Version DOIs (which nanopubs must cite) are added per release.
+# date-released: "YYYY-MM-DD"
+# doi: "<zenodo-concept-doi>"
+# identifiers:
+#   - type: doi
+#     value: "<zenodo-concept-doi>"
+#     description: "Concept DOI (resolves to the latest version) — cite the project"
+#   - type: doi
+#     value: "<zenodo-version-doi>"
+#     description: "Version DOI for v0.1.0 — pins this exact release; cite this from nanopubs"
+#   - type: swh
+#     value: "swh:1:rev:<commit>;origin=https://github.com/FAIR2Adapt/fair-data-access"
+#     description: "Software Heritage ID of the v0.1.0 source tree"
+keywords:
+  - FAIR Digital Objects
+  - access control
+  - ODRL
+  - nanopublications
+  - Decentralized Identifiers
+  - authenticated encryption
+  - RO-Crate
+  - climate change adaptation
+  - FORRT
+  - Science-Live
+references:
+  - type: grant
+    title: "FAIR2Adapt"
+    institution:
+      name: "European Union — Horizon Europe (HORIZON-INFRA-2024-EOSC-01)"
+    number: "101188256"
