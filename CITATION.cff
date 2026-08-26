@@ -17,21 +17,16 @@ repository-code: "https://github.com/FAIR2Adapt/fair-data-access"
 url: "https://fair2adapt.github.io/fair-data-access/"
 license: Apache-2.0
 version: "0.2.0"
-# NOTE: date-released and the DOI identifiers below are filled at release time
-# (Phase 4). doi: is the CONCEPT DOI (resolves to the latest version — cite the
-# project). Version DOIs (which nanopubs must cite) are added per release.
 date-released: "2026-08-26"
-# doi: "<zenodo-concept-doi>"
-# identifiers:
-#   - type: doi
-#     value: "<zenodo-concept-doi>"
-#     description: "Concept DOI (resolves to the latest version) — cite the project"
-#   - type: doi
-#     value: "<zenodo-version-doi>"
-#     description: "Version DOI for v0.1.0 — pins this exact release; cite this from nanopubs"
-#   - type: swh
-#     value: "swh:1:rev:<commit>;origin=https://github.com/FAIR2Adapt/fair-data-access"
-#     description: "Software Heritage ID of the v0.1.0 source tree"
+# doi: is the CONCEPT DOI — it resolves to the latest version, so cite it for the project.
+doi: "10.5281/zenodo.22117251"
+identifiers:
+  - type: doi
+    value: "10.5281/zenodo.22117251"
+    description: "Concept DOI (resolves to the latest version) — cite the project"
+  - type: doi
+    value: "10.5281/zenodo.22117252"
+    description: "Version DOI for v0.2.0 — pins this exact release; cite this from nanopubs"
 keywords:
   - FAIR Digital Objects
   - access control

@@ -1,6 +1,7 @@
 # Published artefacts
 
-Every URI below is live and independently resolvable. Nanopublications are cited in the
+Every URI below is live and independently resolvable. The software archive for v0.2.0 is
+https://doi.org/10.5281/zenodo.22117252 (concept DOI https://doi.org/10.5281/zenodo.22117251). Nanopublications are cited in the
 `https://w3id.org/np/<code>` form because that is the one that content-negotiates to RDF; the
 Science Live platform also mints `https://w3id.org/sciencelive/np/<code>`, which currently
 returns an HTML view for every RDF media type. Both denote the same nanopublication — the
