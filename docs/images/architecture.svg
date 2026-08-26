@@ -1,111 +1,110 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1240 640" width="1240" height="640"
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1340 624" width="1340" height="624"
      font-family="DejaVu Sans, Verdana, Helvetica, sans-serif">
+  <!-- Figure 1 of the ORE method article. Type is sized so that, printed 6.5 in wide,
+       body text lands near 8 pt: pt = font_units * 6.5 / 1340 * 72. Box widths are set
+       from the longest string each must hold, so nothing overflows. -->
   <defs>
     <marker id="ah" markerWidth="9" markerHeight="7" refX="8.5" refY="3.5" orient="auto">
       <path d="M0,0 L9,3.5 L0,7 z" fill="#3f4a56"/>
     </marker>
     <style>
-      .grp   { fill:none; stroke-width:2; stroke-dasharray:7 5; }
-      .glab  { font-size:19px; font-weight:700; letter-spacing:.2px; }
-      .box   { stroke:#3f4a56; stroke-width:1.6; rx:9; }
-      .t     { font-size:20px; font-weight:700; fill:#16202b; text-anchor:middle; }
-      .s     { font-size:16px; fill:#43505e; text-anchor:middle; }
-      .edge  { stroke:#3f4a56; stroke-width:2; fill:none; marker-end:url(#ah); }
-      .elab  { font-size:15px; font-style:italic; fill:#3f4a56; }
-      /* drawn underneath .elab to knock out any line crossing the label
-         (cairosvg ignores paint-order, so the halo must be a separate pass) */
-      .halo  { font-size:15px; font-style:italic; fill:#ffffff;
-               stroke:#ffffff; stroke-width:6; stroke-linejoin:round; }
+      .grp  { fill:none; stroke-width:2.2; stroke-dasharray:8 6; }
+      .glab { font-size:26px; font-weight:700; }
+      .box  { stroke:#3f4a56; stroke-width:1.8; rx:10; }
+      .t    { font-size:28px; font-weight:700; fill:#16202b; text-anchor:middle; }
+      .s    { font-size:22px; fill:#43505e; text-anchor:middle; }
+      .edge { stroke:#3f4a56; stroke-width:2.4; fill:none; marker-end:url(#ah); }
+      .elab { font-size:19px; font-style:italic; fill:#3f4a56; }
+      /* drawn under .elab to knock out any line crossing a label
+         (cairosvg ignores paint-order, so the halo needs its own pass) */
+      .halo { font-size:19px; font-style:italic; fill:#ffffff;
+              stroke:#ffffff; stroke-width:7; stroke-linejoin:round; }
     </style>
   </defs>
+  <rect width="1340" height="624" fill="#ffffff"/>
 
-  <rect width="1240" height="640" fill="#ffffff"/>
+  <!-- ===================== ROW 1 — the object ===================== -->
+  <text class="glab" x="30"  y="42" fill="#8a7420">Metadata</text>
+  <rect class="grp" x="30"  y="56" width="360" height="212" stroke="#8a7420"/>
+  <rect class="box" x="48"  y="78" width="324" height="170" fill="#f4e6bd"/>
+  <text class="t" x="210" y="140">RO-Crate</text>
+  <text class="s" x="210" y="182">hasPolicy · distribution</text>
+  <text class="s" x="210" y="214">variableMeasured</text>
 
-  <!-- ============ ROW 1 : the object ============ -->
-  <text class="glab" x="40"  y="40" fill="#8a7420">Metadata</text>
-  <rect class="grp" x="40"  y="54" width="300" height="200" stroke="#8a7420"/>
-  <rect class="box" x="58"  y="76" width="264" height="156" fill="#f4e6bd"/>
-  <text class="t" x="190" y="132">RO-Crate</text>
-  <text class="s" x="190" y="164">hasPolicy · distribution</text>
-  <text class="s" x="190" y="190">variableMeasured</text>
+  <text class="glab" x="420" y="42" fill="#1f5f8b">Trust layer — nanopubs</text>
+  <rect class="grp" x="420" y="56" width="390" height="212" stroke="#1f5f8b"/>
+  <rect class="box" x="438" y="78" width="354" height="80" fill="#d6e6f5"/>
+  <text class="t" x="615" y="114">ODRL policy</text>
+  <text class="s" x="615" y="146">permissions · prohibitions</text>
+  <rect class="box" x="438" y="170" width="354" height="78" fill="#d6e6f5"/>
+  <text class="t" x="615" y="205">Access grant</text>
+  <text class="s" x="615" y="237">signed · auditable</text>
 
-  <text class="glab" x="372" y="40" fill="#1f5f8b">Trust layer — nanopub network</text>
-  <rect class="grp" x="372" y="54" width="360" height="200" stroke="#1f5f8b"/>
-  <rect class="box" x="390" y="76" width="324" height="72" fill="#d6e6f5"/>
-  <text class="t" x="552" y="107">ODRL policy</text>
-  <text class="s" x="552" y="133">permissions · prohibitions · duties</text>
-  <rect class="box" x="390" y="160" width="324" height="72" fill="#d6e6f5"/>
-  <text class="t" x="552" y="191">Access grant</text>
-  <text class="s" x="552" y="217">signed · timestamped · auditable</text>
+  <text class="glab" x="850" y="42" fill="#8d3a72">Identity + encryption</text>
+  <rect class="grp" x="850" y="56" width="460" height="212" stroke="#8d3a72"/>
+  <rect class="box" x="868" y="78" width="424" height="80" fill="#f3dcec"/>
+  <text class="t" x="1080" y="114">DID (did:web)</text>
+  <text class="s" x="1080" y="146">requester identity · public key</text>
+  <rect class="box" x="868" y="170" width="424" height="78" fill="#f3dcec"/>
+  <text class="t" x="1080" y="205">AES-256-GCM</text>
+  <text class="s" x="1080" y="237">ECDH/HKDF key wrapping</text>
 
-  <text class="glab" x="764" y="40" fill="#8d3a72">Identity + encryption</text>
-  <rect class="grp" x="764" y="54" width="436" height="200" stroke="#8d3a72"/>
-  <rect class="box" x="782" y="76" width="400" height="72" fill="#f3dcec"/>
-  <text class="t" x="982" y="107">DID (did:web)</text>
-  <text class="s" x="982" y="133">requester identity · public key</text>
-  <rect class="box" x="782" y="160" width="400" height="72" fill="#f3dcec"/>
-  <text class="t" x="982" y="191">AES-256-GCM + ECDH/HKDF</text>
-  <text class="s" x="982" y="217">data encryption · key wrapping</text>
+  <!-- ===================== ROW 2 — request time ===================== -->
+  <text class="glab" x="30"  y="366" fill="#9e4426">Key server (GitHub)</text>
+  <rect class="grp" x="30"  y="380" width="866" height="220" stroke="#9e4426"/>
+  <rect class="box" x="48"  y="404" width="230" height="84" fill="#fadfd0"/>
+  <text class="t" x="163" y="440">Issue</text>
+  <text class="s" x="163" y="472">access request</text>
+  <rect class="box" x="298" y="404" width="330" height="84" fill="#fadfd0"/>
+  <text class="t" x="463" y="440">Actions</text>
+  <text class="s" x="463" y="472">resolve · evaluate · wrap</text>
+  <rect class="box" x="648" y="404" width="230" height="84" fill="#fadfd0"/>
+  <text class="t" x="763" y="440">Pages</text>
+  <text class="s" x="763" y="472">wrapped key</text>
+  <rect class="box" x="48"  y="506" width="830" height="76" fill="#fadfd0"/>
+  <text class="t" x="463" y="540">Secrets — dataset keys</text>
+  <text class="s" x="463" y="570">never leave the workflow</text>
 
-  <!-- ============ ROW 2 : request time ============ -->
-  <text class="glab" x="40"  y="352" fill="#9e4426">Key server (GitHub)</text>
-  <rect class="grp" x="40"  y="366" width="692" height="228" stroke="#9e4426"/>
-  <rect class="box" x="58"  y="390" width="188" height="78" fill="#fadfd0"/>
-  <text class="t" x="152" y="422">GitHub Issue</text>
-  <text class="s" x="152" y="446">access request</text>
-  <rect class="box" x="324" y="390" width="212" height="78" fill="#fadfd0"/>
-  <text class="t" x="430" y="422">GitHub Actions</text>
-  <text class="s" x="430" y="446">resolve · evaluate · wrap</text>
-  <rect class="box" x="560" y="390" width="154" height="78" fill="#fadfd0"/>
-  <text class="t" x="637" y="422">GitHub Pages</text>
-  <text class="s" x="637" y="446">wrapped key</text>
-  <rect class="box" x="58"  y="500" width="656" height="70" fill="#fadfd0"/>
-  <text class="t" x="386" y="530">GitHub Secrets — dataset keys</text>
-  <text class="s" x="386" y="554">never leave the evaluating workflow</text>
+  <text class="glab" x="926" y="366" fill="#1f6b45">Data storage</text>
+  <rect class="grp" x="926" y="380" width="384" height="220" stroke="#1f6b45"/>
+  <rect class="box" x="944" y="404" width="166" height="84" fill="#d5ecdc"/>
+  <text class="t" x="1027" y="440">Zenodo</text>
+  <text class="s" x="1027" y="472">archival · DOI</text>
+  <rect class="box" x="1126" y="404" width="166" height="84" fill="#d5ecdc"/>
+  <text class="t" x="1209" y="440">S3 / EOSC</text>
+  <text class="s" x="1209" y="472">cloud access</text>
+  <rect class="box" x="944" y="506" width="348" height="76" fill="#d5ecdc"/>
+  <text class="t" x="1118" y="540">Encrypted files</text>
+  <text class="s" x="1118" y="570">safe to host publicly</text>
 
-  <text class="glab" x="764" y="352" fill="#1f6b45">Data storage</text>
-  <rect class="grp" x="764" y="366" width="436" height="228" stroke="#1f6b45"/>
-  <rect class="box" x="782" y="390" width="190" height="78" fill="#d5ecdc"/>
-  <text class="t" x="877" y="422">Zenodo</text>
-  <text class="s" x="877" y="446">archival · DOI</text>
-  <rect class="box" x="992" y="390" width="190" height="78" fill="#d5ecdc"/>
-  <text class="t" x="1087" y="422">S3 / EOSC</text>
-  <text class="s" x="1087" y="446">cloud access</text>
-  <rect class="box" x="782" y="500" width="400" height="70" fill="#d5ecdc"/>
-  <text class="t" x="982" y="530">Encrypted data files</text>
-  <text class="s" x="982" y="554">safe to host publicly</text>
+  <!-- ===================== EDGES ===================== -->
+  <path class="edge" d="M372,118 H434"/>
+  <text class="halo" x="378" y="108">hasPolicy</text>
+  <text class="elab" x="378" y="108">hasPolicy</text>
 
-  <!-- ============ EDGES ============ -->
-  <!-- RO-Crate -> policy / grant : short horizontals -->
-  <path class="edge" d="M322,112 H386"/>
-  <text class="halo" x="330" y="103">hasPolicy</text>
-  <text class="elab" x="330" y="103">hasPolicy</text>
-  <path class="edge" d="M322,196 H386"/>
-  <text class="halo" x="330" y="186">grant ref.</text>
-  <text class="elab" x="330" y="186">grant ref.</text>
+  <path class="edge" d="M372,209 H434"/>
+  <text class="halo" x="378" y="199">grant ref.</text>
+  <text class="elab" x="378" y="199">grant ref.</text>
 
-  <!-- Issue -> Actions -->
-  <path class="edge" d="M246,429 H320"/>
-  <text class="halo" x="249" y="420">trigger</text>
-  <text class="elab" x="249" y="420">trigger</text>
+  <path class="edge" d="M278,446 H294"/>
+  <text class="halo" x="222" y="396">trigger</text>
+  <text class="elab" x="222" y="396">trigger</text>
 
-  <!-- Actions -> Pages -->
-  <path class="edge" d="M536,429 H556"/>
+  <path class="edge" d="M628,446 H644"/>
 
-  <!-- Actions -> Secrets -->
-  <path class="edge" d="M430,468 V496"/>
-  <text class="halo" x="438" y="489">reads</text>
-  <text class="elab" x="438" y="489">reads</text>
+  <path class="edge" d="M400,488 V502"/>
+  <text class="halo" x="408" y="500">reads</text>
+  <text class="elab" x="408" y="500">reads</text>
 
-  <!-- Actions -> trust layer : straight up through the row gap -->
-  <path class="edge" d="M430,388 V236"/>
-  <text class="halo" x="440" y="300">evaluates policy,</text>
-  <text class="elab" x="440" y="300">evaluates policy,</text>
-  <text class="halo" x="440" y="320">records grant</text>
-  <text class="elab" x="440" y="320">records grant</text>
+  <!-- Actions -> trust layer, straight up through the band between the rows -->
+  <path class="edge" d="M463,402 V252"/>
+  <text class="halo" x="474" y="312">evaluates policy,</text>
+  <text class="elab" x="474" y="312">evaluates policy,</text>
+  <text class="halo" x="474" y="338">records grant</text>
+  <text class="elab" x="474" y="338">records grant</text>
 
-  <!-- Actions -> DID : orthogonal, routed through the gap between rows -->
-  <path class="edge" d="M500,388 V300 H982 V236"/>
-  <text class="halo" x="620" y="292">resolves DID, wraps key for its public key</text>
-  <text class="elab" x="620" y="292">resolves DID, wraps key for its public key</text>
+  <!-- Actions -> identity, routed orthogonally through the same band -->
+  <path class="edge" d="M560,402 V320 H1080 V252"/>
+  <text class="halo" x="760" y="312">resolves DID, wraps key</text>
+  <text class="elab" x="760" y="312">resolves DID, wraps key</text>
 </svg>
