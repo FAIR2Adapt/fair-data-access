@@ -113,24 +113,79 @@ def find_grants(dataset_uri: str, requester_did: str = None) -> list[dict]:
     return results
 
 
-def get_nanopub_creator(nanopub_uri: str) -> str:
-    """Get the dct:creator of a nanopub from its pubinfo graph."""
+def artifact_code(nanopub_uri: str) -> str:
+    """The trusty-URI artifact code, independent of the namespace it is served under.
+
+    The same nanopublication is addressable as https://w3id.org/np/<code> and, when
+    published via Science Live, as https://w3id.org/sciencelive/np/<code>. Only the
+    final segment is identity; compare on that, never on the whole URI.
+    """
+    return nanopub_uri.rstrip("/").rsplit("/", 1)[-1].removesuffix(".trig")
+
+
+def canonical_nanopub_url(nanopub_uri: str) -> str:
+    """The URL to fetch a nanopub's RDF from, whatever namespace it was minted under.
+
+    A nanopublication's identity is its trusty-URI artifact code, and the registry
+    serves every nanopub at https://w3id.org/np/<code>. Platform-specific namespaces
+    (e.g. Science Live's https://w3id.org/sciencelive/np/<code>) are not guaranteed to
+    content-negotiate to RDF, so always fetch through the canonical form.
+    """
+    return f"https://w3id.org/np/{artifact_code(nanopub_uri)}"
+
+
+def same_nanopub(a: str | None, b: str | None) -> bool:
+    """True when two URIs denote the same nanopublication under any namespace."""
+    if not a or not b:
+        return False
+    return artifact_code(a) == artifact_code(b)
+
+
+def fetch_nanopub(nanopub_uri: str) -> tuple[Dataset, URIRef]:
+    """Fetch a nanopub and return (dataset, its own identifier).
+
+    The identifier is read from the RDF rather than assumed to equal the URL we
+    fetched: a nanopub served under one namespace may identify itself under another,
+    in which case constructing graph names from the request URL finds nothing.
+    """
     response = httpx.get(
-        nanopub_uri,
+        canonical_nanopub_url(nanopub_uri),
         headers={"Accept": "application/trig"},
         follow_redirects=True,
         timeout=60,
     )
     response.raise_for_status()
 
+    body = response.text.lstrip()
+    ctype = response.headers.get("content-type", "")
+    # "<" alone is not a reliable signal: TriG statements may start with a URI, and
+    # an HTML shell starts "<!DOCTYPE". Test for markup explicitly.
+    if body[:9].lower().startswith(("<!doctype", "<html")) or "html" in ctype:
+        raise ValueError(
+            f"{nanopub_uri} did not return RDF (got {response.headers.get('content-type', '?')}). "
+            "Some vanity namespaces serve an HTML application shell; try the "
+            f"https://w3id.org/np/{artifact_code(nanopub_uri)} form."
+        )
+
     ds = Dataset()
     ds.parse(data=response.text, format="trig")
 
-    pubinfo_uri = nanopub_uri.rstrip("/") + "/pubinfo"
-    pubinfo = ds.graph(pubinfo_uri)
+    for graph in ds.graphs():
+        for subj in graph.subjects(NP.hasPublicationInfo, None):
+            return ds, URIRef(str(subj))
 
-    for creator in pubinfo.objects(URIRef(nanopub_uri), DCT.creator):
-        return str(creator)
+    raise ValueError(f"No np:hasPublicationInfo found in {nanopub_uri}")
+
+
+def get_nanopub_creator(nanopub_uri: str) -> str:
+    """Get the dct:creator of a nanopub, whichever namespace it is served under."""
+    ds, np_uri = fetch_nanopub(nanopub_uri)
+
+    for graph in ds.graphs():
+        if not str(graph.identifier).rstrip("/").endswith("pubinfo"):
+            continue
+        for creator in graph.objects(np_uri, DCT.creator):
+            return str(creator)
 
     raise ValueError(f"No creator found in nanopub {nanopub_uri}")
 
@@ -144,7 +199,7 @@ def verify_nanopub_signature(nanopub_uri: str) -> bool:
     from nanopub import Nanopub
 
     response = httpx.get(
-        nanopub_uri,
+        canonical_nanopub_url(nanopub_uri),
         headers={"Accept": "application/trig"},
         follow_redirects=True,
         timeout=60,

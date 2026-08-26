@@ -106,7 +106,7 @@ print(f"Key (hex): {dataset_key.hex()[:16]}...{dataset_key.hex()[-4:]}")
 # %%
 from fair_data_access.encrypt import decrypt_file
 
-ENCRYPTED_PATH = DATA_DIR / "synthetic-biodiversity-observations.csv.enc"
+ENCRYPTED_PATH = DATA_DIR / "hamburg-buildings-example.gpkg.enc"
 
 if not ENCRYPTED_PATH.exists():
     print("ERROR: Encrypted dataset not found.")
@@ -123,25 +123,29 @@ print(f"Decrypted: {decrypted_path}")
 # dataset.
 
 # %%
-import pandas as pd
+import geopandas as gpd
 
-df = pd.read_csv(decrypted_path, comment="#")
-print(f"Rows: {len(df)}, Columns: {list(df.columns)}")
+gdf = gpd.read_file(decrypted_path)
+print(f"Buildings: {len(gdf)}, CRS: {gdf.crs}")
+print(f"Columns: {list(gdf.columns)}")
 print()
-print("=== First 5 rows ===")
-df.head()
+print("=== First 5 buildings ===")
+gdf.drop(columns=gdf.geometry.name).head()
 
 # %%
-# Quick integrity check: compare with the original
-original = pd.read_csv(
-    DATA_DIR / "synthetic-biodiversity-observations.csv", comment="#"
-)
+# Integrity check: attributes and geometry must both match the original byte-for-byte.
+original = gpd.read_file(DATA_DIR / "hamburg-buildings-example.gpkg")
 
-assert len(df) == len(original), "Row count mismatch!"
-assert list(df.columns) == list(original.columns), "Column mismatch!"
-assert df.equals(original), "Data mismatch!"
+assert len(gdf) == len(original), "Row count mismatch!"
+assert list(gdf.columns) == list(original.columns), "Column mismatch!"
+assert gdf.crs == original.crs, "CRS mismatch!"
+assert gdf.drop(columns=gdf.geometry.name).equals(
+    original.drop(columns=original.geometry.name)
+), "Attribute mismatch!"
+assert gdf.geometry.geom_equals_exact(original.geometry, tolerance=0).all(), "Geometry mismatch!"
 
-print(f"✅ Integrity verified — {len(df)} rows match the original exactly.")
+print(f"✅ Integrity verified — {len(gdf)} buildings match the original exactly "
+      f"(attributes, CRS and geometry).")
 
 # %% [markdown]
 # ## Step 6 — Verify the access grant (audit trail)
@@ -157,8 +161,10 @@ print(f"✅ Integrity verified — {len(df)} rows match the original exactly.")
 # ```{tip}
 # You can view ODRL access grants in a user-friendly format on the
 # **Science Live platform**:
-# - [View this walkthrough's grant](https://platform.sciencelive4all.org/np/?uri=https://w3id.org/np/RARNOf26WWMYa0BkLWpMURNRqjwSVGXj-4A9r9iCBpruM)
-# - [View the ODRL policy it references](https://platform.sciencelive4all.org/np/?uri=https://w3id.org/np/RATzaPLmaUtrmZ6w9WILh8jxF3F-e23xPrFHJQFO3-U6Y)
+# The policy and grant nanopublications for *this* dataset are listed in
+# `nanopubs/PUBLISHED.md` once published. Until then the signature check below
+# reports "not yet published" rather than verifying an unrelated nanopublication —
+# verifying the wrong pair would look like a passing check.
 #
 # The custom viewer renders each nanopub as a readable card with dataset,
 # assignee, permitted actions, and policy reference.
@@ -174,23 +180,35 @@ print(f"✅ Integrity verified — {len(df)} rows match the original exactly.")
 # %%
 import json
 
-# In production, this would be:
-# from fair_data_access.grant import verify_access
-# result = verify_access(dataset_uri, consumer_did, policy_nanopub_uri)
+from fair_data_access.grant import verify_access
 
-# For the walkthrough, we show what a verified grant looks like:
-verified_grant = {
-    "status": "GRANTED",
-    "dataset": "https://fair2adapt.eu/data/walkthrough-biodiversity",
-    "consumer_did": "did:web:fair2adapt.github.io:fair-data-access:example-consumer",
-    "policy_nanopub": "https://w3id.org/np/RATzaPLmaUtrmZ6w9WILh8jxF3F-e23xPrFHJQFO3-U6Y",  # view: https://platform.sciencelive4all.org/np/?uri=https://w3id.org/np/RATzaPLmaUtrmZ6w9WILh8jxF3F-e23xPrFHJQFO3-U6Y
-    "grant_nanopub": "https://w3id.org/np/RARNOf26WWMYa0BkLWpMURNRqjwSVGXj-4A9r9iCBpruM",  # view: https://platform.sciencelive4all.org/np/?uri=https://w3id.org/np/RARNOf26WWMYa0BkLWpMURNRqjwSVGXj-4A9r9iCBpruM
-    "signature_valid": True,
-    "publisher_matches_policy": True,
-}
+POLICY_PATH = Path("policies/hamburg-buildings-example.jsonld")
+policy = json.loads(POLICY_PATH.read_text())
 
-print("=== Access Grant Verification ===")
-print(json.dumps(verified_grant, indent=2))
+DATASET_URI = policy["permission"][0]["target"]
+POLICY_NANOPUB = policy.get("_nanopub_uri")
+CONSUMER_DID = "did:web:fair2adapt.github.io:fair-data-access:example-consumer"
+
+# This calls the real verifier against the live nanopub network. It searches for a
+# grant naming this requester + dataset, checks its signature, and confirms it was
+# published by the same identity that published the policy.
+#
+# We deliberately do NOT print a canned "signature_valid: true" when there is
+# nothing to check -- a hardcoded pass looks exactly like a real one.
+if POLICY_NANOPUB is None:
+    print("=== Access Grant Verification ===")
+    print("Policy for this dataset is not published yet, so there is no grant to verify.")
+    print("Publish it (see nanopubs/drafts/hamburg-buildings-example.md), set")
+    print(f"_nanopub_uri in {POLICY_PATH}, and re-run this cell.")
+else:
+    result = verify_access(
+        dataset_uri=DATASET_URI,
+        requester_did=CONSUMER_DID,
+        policy_nanopub_uri=POLICY_NANOPUB,
+    )
+    print("=== Access Grant Verification ===")
+    print(json.dumps(result, indent=2))
+    assert result["granted"], f"Grant verification failed: {result.get('reason')}"
 
 # %% [markdown]
 # ## Summary
@@ -224,7 +242,7 @@ print(json.dumps(verified_grant, indent=2))
 #
 # ## What's next?
 #
-# - **Adapt to your data:** Replace `data/synthetic-biodiversity-observations.csv`
+# - **Adapt to your data:** Replace `data/hamburg-buildings-example.gpkg`
 #   with your own file and re-run `01_provider.ipynb`. No code changes needed.
 # - **Publish for real:** Use the Science Live platform to create the ODRL
 #   policy and access grant as signed nanopublications.

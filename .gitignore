@@ -12,3 +12,13 @@ docs/keys/
 docs/_build/
 .ipynb_checkpoints/
 nanopubs/output/
+
+# pixi environment (the solved env — do NOT ignore pixi.lock, it must be committed)
+.pixi/
+# Snakemake pipeline outputs / run markers
+results/
+.snakemake/
+
+# Example layer fetched from Zenodo 10.5281/zenodo.19860733 by
+# scripts/fetch_example_data.py -- derived, not vendored.
+examples/walkthrough/data/hamburg-buildings-example.gpkg

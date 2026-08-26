@@ -1,0 +1,82 @@
+{
+  "_readme": [
+    "Policy and grant for the Hamburg building-level flood-risk EXAMPLE layer -- the demo",
+    "object for the ORE Method Article. Mirrors the production Hamburg policy field-for-field.",
+    "",
+    "The dataset and policy URIs are NOT free choices: the ODRL Access Policy template",
+    "(RA61D4c7...) hard-codes nt:hasPrefix https://fair2adapt.eu/data/ and .../policy/,",
+    "so Nanodash only accepts the suffix. They are identifiers, not locators.",
+    "The domain is currently unregistered (NXDOMAIN); rohub_ro is where the object resolves.",
+    "",
+    "Publish in this order: policy first, then grant (the grant needs the policy's nanopub URI)."
+  ],
+  "metadata": {
+    "creator_orcid": "0000-0002-1784-2920",
+    "creator_name": "Anne Fouilloux",
+    "license": "https://creativecommons.org/licenses/by/4.0/",
+    "project": {
+      "uri": "https://fair2adapt-eosc.eu",
+      "label": "FAIR2Adapt"
+    }
+  },
+  "dataset_uri": "https://fair2adapt.eu/data/hamburg-buildings-example",
+  "policy": {
+    "template": "https://w3id.org/np/RA61D4c7dB5t0B1mLhc78bN2vagqYTXQiJDKY0yImRULI",
+    "template_label": "ODRL Access Policy for FAIR Data",
+    "id": "odrl_hamburg_buildings_example",
+    "policy_uid": "https://fair2adapt.eu/policy/hamburg-buildings-example",
+    "policy_type": "Offer",
+    "target": {
+      "uri": "https://fair2adapt.eu/data/hamburg-buildings-example",
+      "label": "Hamburg building-level pluvial flood-risk example layer"
+    },
+    "permissions": [
+      {
+        "actions": [
+          "use",
+          "reproduce"
+        ],
+        "purpose": "https://w3id.org/dpv#AcademicResearch"
+      }
+    ],
+    "prohibitions": [
+      {
+        "actions": [
+          "distribute",
+          "commercialize"
+        ]
+      }
+    ],
+    "duties": [
+      {
+        "action": "attribute",
+        "attributed_party": {
+          "uri": "https://fair2adapt-eosc.eu",
+          "label": "FAIR2Adapt"
+        }
+      }
+    ],
+    "published_nanopub": "https://w3id.org/np/RAkCc5ernqtkD4bGumI2wsJOC14-jy1sbYtWwukTL_bgM"
+  },
+  "grant": {
+    "template": "https://w3id.org/np/RAoLSOhZx_dLX6xnGBN8o1aQSiD8HSrwBshfCjXXSslhE",
+    "template_label": "ODRL Access Grant for FAIR Data",
+    "_template_note": "RAoLSO is the template the Science Live platform offers (hardcoded as ODRL_ACCESS_GRANT in its template registry). It differs from the earlier RAeRMv only by carrying rdfs:label for the three action URIs (so they render as names, not URIs) and by dropping the FAIR2Adapt tags and the datasetUri/policyNanopubUri prefix constraints. Because it has no prefix, the dataset URI must be pasted in full and MUST match the policy's target exactly -- a mismatch does not error, it silently produces a grant verify_access can never match.",
+    "id": "grant_hamburg_buildings_example_001",
+    "target": {
+      "uri": "https://fair2adapt.eu/data/hamburg-buildings-example",
+      "label": "Hamburg building-level pluvial flood-risk example layer"
+    },
+    "assignee": {
+      "did": "https://fair2adapt.github.io/fair-data-access/example-consumer/did.json",
+      "label": "Walkthrough example consumer"
+    },
+    "granted_actions": [
+      "use",
+      "reproduce"
+    ],
+    "under_policy": "https://w3id.org/np/RAkCc5ernqtkD4bGumI2wsJOC14-jy1sbYtWwukTL_bgM",
+    "published_nanopub": "https://w3id.org/np/RAhUhIjOyF36Pc2gXquYf2JP4QWmrdPLiBrJcwJubIU2U"
+  },
+  "rohub_ro": "https://w3id.org/ro-id/542c8767-2563-44c1-b9df-be0a56d38a84"
+}

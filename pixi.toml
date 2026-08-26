@@ -1,0 +1,61 @@
+# pixi.toml — single source of truth for the runtime.
+# Used by local dev, CI, and the reproducible demo. After editing, run
+# `pixi install` to (re)generate pixi.lock, and commit BOTH files together.
+#
+# The fair-data-access package itself is installed editable from this repo via
+# [pypi-dependencies]; that pulls its runtime deps (cryptography, nanopub,
+# pyodre, httpx, rdflib, s3fs) from PyPI. Everything else that a demo notebook
+# or the pipeline imports is pinned here from conda-forge.
+
+[workspace]
+name = "fair-data-access"
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64", "osx-arm64", "win-64"]
+
+[dependencies]
+python = "3.12.*"
+pip = "*"
+# --- demo data handling ---
+pandas = ">=2.0"
+# The demo gates a GeoPackage building layer; py7zr unpacks the ArcGIS .lpkx
+# layer package the Zenodo example data ships as.
+geopandas = ">=1.0"
+py7zr = "*"
+# --- notebook execution + Jupyter Book ---
+jupytext = "*"
+jupyterlab = "*"
+nbclient = "*"
+nbconvert = "*"
+ipykernel = "*"
+# --- pipeline driver ---
+snakemake = "*"
+
+[pypi-dependencies]
+# Editable install of this repo — brings cryptography, nanopub, pyodre, httpx,
+# rdflib, s3fs (see pyproject.toml [project.dependencies]).
+fair-data-access = { path = ".", editable = true }
+
+[feature.docs.dependencies]
+mystmd = "*"
+
+[feature.tests.dependencies]
+pytest = ">=8.0"
+pytest-asyncio = ">=0.23"
+
+# Keep the env hermetic: never pull packages from ~/.local (user site), which
+# otherwise leaks a mismatched jupyter_client into the kernel and kills it.
+[activation.env]
+PYTHONNOUSERSITE = "1"
+
+[environments]
+default = { solve-group = "default" }
+docs = { features = ["docs"], solve-group = "default" }
+tests = { features = ["tests"], solve-group = "default" }
+
+[tasks]
+run = "snakemake --cores 1"
+book = "myst build --html"
+lab = "jupyter lab"
+
+[feature.tests.tasks]
+test = "pytest -q"

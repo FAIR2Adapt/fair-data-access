@@ -36,16 +36,23 @@
 # data.
 
 # %%
-import pandas as pd
+import geopandas as gpd
 from pathlib import Path
 
 DATA_DIR = Path("data")
-DATASET_PATH = DATA_DIR / "synthetic-biodiversity-observations.csv"
+DATASET_PATH = DATA_DIR / "hamburg-buildings-example.gpkg"
 
-df = pd.read_csv(DATASET_PATH, comment="#")
+if not DATASET_PATH.exists():
+    raise FileNotFoundError(
+        f"{DATASET_PATH} not found. Fetch it first:\n"
+        "    python3 ../../scripts/fetch_example_data.py"
+    )
+
+gdf = gpd.read_file(DATASET_PATH)
 print(f"Dataset: {DATASET_PATH}")
-print(f"Rows: {len(df)}, Columns: {list(df.columns)}")
-df.head()
+print(f"Buildings: {len(gdf)}, CRS: {gdf.crs}")
+print(f"Columns: {list(gdf.columns)}")
+gdf.drop(columns=gdf.geometry.name).head()
 
 # %% [markdown]
 # ## Step 2 — Encrypt the dataset
@@ -93,7 +100,9 @@ print("Without the dataset key, it is computationally infeasible to decrypt.")
 # - 📋 **Duty:** Attribute to FAIR2Adapt
 #
 # The published nanopublication of this policy is:
-# [View on Science Live](https://platform.sciencelive4all.org/np/?uri=https://w3id.org/np/RATzaPLmaUtrmZ6w9WILh8jxF3F-e23xPrFHJQFO3-U6Y)
+# Once this policy is published as a nanopublication, set `_nanopub_uri` in
+# `policies/hamburg-buildings-example.jsonld` and it flows through automatically.
+# See `nanopubs/drafts/hamburg-buildings-example.md` for the exact form fields.
 #
 # ```{figure} images/sciencelive-odrl-policy-view.png
 # :alt: ODRL Policy rendered in Science Live
@@ -105,7 +114,7 @@ print("Without the dataset key, it is computationally infeasible to decrypt.")
 # %%
 import json
 
-POLICY_PATH = Path("policies/example-policy.jsonld")
+POLICY_PATH = Path("policies/hamburg-buildings-example.jsonld")
 policy = json.loads(POLICY_PATH.read_text())
 
 print("=== ODRL Access Policy ===")
@@ -137,8 +146,14 @@ CONSUMER_DID_DOC_PATH = KEYS_DIR / "did" / "example-consumer.json"
 
 consumer_did_doc = json.loads(CONSUMER_DID_DOC_PATH.read_text())
 
+# The purpose the consumer declares in their access request. This policy mirrors
+# the production Hamburg policy and constrains use/reproduce to
+# dpv:AcademicResearch, so this permits. Change it to e.g. "PublicBenefit" to
+# watch the deny path close the loop.
+declared_purpose = "AcademicResearch"
+
 print(f"Access request received from: {CONSUMER_DID}")
-print(f"Declared purpose: Academic Research")
+print(f"Declared purpose: {declared_purpose}")
 print(f"Consumer's public key curve: {consumer_did_doc['verificationMethod'][0]['publicKeyJwk']['crv']}")
 
 # %% [markdown]
@@ -148,20 +163,17 @@ print(f"Consumer's public key curve: {consumer_did_doc['verificationMethod'][0][
 # declared purpose matches the policy's constraints.
 
 # %%
-# In production, this is done by fair_data_access.policy.evaluate_policy().
-# Here we check manually for clarity.
+# This is the same evaluator the GitHub Actions enforcement workflow calls —
+# the decision below is *binding*, not illustrative: if it denies, no key is
+# wrapped and no grant is issued.
+from fair_data_access.policy import evaluate_policy
 
-declared_purpose = "https://w3id.org/dpv#AcademicResearch"
-allowed_purposes = [
-    c["rightOperand"]["@id"]
-    for p in policy["permission"]
-    for c in p.get("constraint", [])
-]
+permitted = evaluate_policy(policy, requester_did=CONSUMER_DID, purpose=declared_purpose)
 
-if declared_purpose in allowed_purposes:
-    print(f"✅ PERMIT — purpose '{declared_purpose.split('#')[1]}' matches policy constraint")
+if permitted:
+    print(f"✅ PERMIT — declared purpose '{declared_purpose}' satisfies the policy constraint")
 else:
-    print(f"❌ DENY — purpose not allowed by policy")
+    print(f"❌ DENY — declared purpose '{declared_purpose}' is not permitted by this policy")
 
 # %% [markdown]
 # ## Step 6 — Wrap the dataset key for the consumer
@@ -183,6 +195,14 @@ from fair_data_access.keys import wrap_key, save_wrapped_key
 
 # Extract the consumer's public key from their DID document
 consumer_public_pem = get_public_key_pem(consumer_did_doc)
+
+# The access decision gates everything downstream. A denied request must not
+# produce a wrapped key — otherwise the policy is decorative.
+if not permitted:
+    raise PermissionError(
+        f"Access denied: declared purpose {declared_purpose!r} is not permitted "
+        "by the governing ODRL policy. No key is wrapped and no grant is issued."
+    )
 
 # Wrap the dataset key for this specific consumer
 wrapped_envelope = wrap_key(dataset_key, consumer_public_pem)
@@ -217,8 +237,13 @@ grant_record = {
     "type": "odrl:Agreement",
     "assignee": CONSUMER_DID,
     "target": policy["permission"][0]["target"],
-    "policy_nanopub": "https://w3id.org/np/RATzaPLmaUtrmZ6w9WILh8jxF3F-e23xPrFHJQFO3-U6Y",  # view: https://platform.sciencelive4all.org/np/?uri=https://w3id.org/np/RATzaPLmaUtrmZ6w9WILh8jxF3F-e23xPrFHJQFO3-U6Y
-    "granted_actions": ["use", "reproduce"],
+    # Read from the policy file so there is exactly one place to update once the
+    # policy nanopublication for this dataset is published. None until then.
+    "policy_nanopub": policy.get("_nanopub_uri"),
+    "granted_actions": [
+        p["action"] for p in policy["permission"]
+    ],
+    "declared_purpose": declared_purpose,
     "timestamp": datetime.now(timezone.utc).isoformat(),
 }
 
@@ -235,7 +260,7 @@ print("Anyone can verify that the grant was issued by the policy publisher.")
 #
 # | Step | Artefact | Where it lives |
 # |------|----------|----------------|
-# | Encrypt dataset | `synthetic-biodiversity-observations.csv.enc` | Public (S3, Zenodo, GitHub) |
+# | Encrypt dataset | `hamburg-buildings-example.gpkg.enc` | Public (ROHub, S3, Zenodo) |
 # | Dataset key | 256-bit AES key | Provider's secret store (never shared directly) |
 # | ODRL policy | `example-policy.jsonld` → nanopublication | Public (nanopub network) |
 # | Wrapped key | `wrapped-dataset-key.json` | Public (GitHub Pages) |
