@@ -24,6 +24,17 @@ rule all:
         f"{RESULTS}/walkthrough-verified.txt",
 
 
+# ---------- 0b: Example data (fetched by DOI, never vendored) ----------
+# Zenodo 10.5281/zenodo.19860733 (CC BY 4.0), published with
+# https://doi.org/10.5194/nhess-26-2765-2026. Same schema and building-level
+# granularity as the protected CS3 layer.
+rule fetch_data:
+    output:
+        f"{WT}/data/hamburg-buildings-example.gpkg",
+    shell:
+        "python scripts/fetch_example_data.py"
+
+
 # ---------- 0: Consumer identity (self-contained, zero secrets) ----------
 # The private half of the example identity is never committed. On a fresh clone
 # this rule mints a matched (private, public, DID document) triple so the demo
@@ -41,11 +52,11 @@ rule setup_keys:
 rule provider:
     input:
         key=f"{WT}/keys/example-consumer-private.pem",
-        data=f"{WT}/data/synthetic-biodiversity-observations.csv",
-        policy=f"{WT}/policies/example-policy.jsonld",
+        data=f"{WT}/data/hamburg-buildings-example.gpkg",
+        policy=f"{WT}/policies/hamburg-buildings-example.jsonld",
         did=f"{WT}/keys/did/example-consumer.json",
     output:
-        enc=f"{WT}/data/synthetic-biodiversity-observations.csv.enc",
+        enc=f"{WT}/data/hamburg-buildings-example.gpkg.enc",
         wrapped=f"{WT}/keys/wrapped-dataset-key.json",
         nb=f"{WT}/01_provider.ipynb",
     shell:
@@ -57,12 +68,16 @@ rule provider:
 # byte-for-byte integrity against the original. Writes a verification marker.
 rule consumer:
     input:
-        enc=f"{WT}/data/synthetic-biodiversity-observations.csv.enc",
+        enc=f"{WT}/data/hamburg-buildings-example.gpkg.enc",
         wrapped=f"{WT}/keys/wrapped-dataset-key.json",
         key=f"{WT}/keys/example-consumer-private.pem",
     output:
         nb=f"{WT}/02_consumer.ipynb",
         marker=f"{RESULTS}/walkthrough-verified.txt",
     shell:
+        # The notebook asserts on integrity AND on the access decision, so a
+        # denied request or a mismatched dataset fails the rule rather than
+        # silently writing a "passed" marker.
         f"( cd {WT} && jupytext --to notebook --execute 02_consumer.py ) "
+        f'&& grep -q "Integrity verified" {WT}/02_consumer.ipynb '
         f'&& echo "walkthrough integrity check passed" > {RESULTS}/walkthrough-verified.txt'

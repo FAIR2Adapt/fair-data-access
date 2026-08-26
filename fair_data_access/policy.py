@@ -38,6 +38,18 @@ def _normalize_action(action: str) -> str:
     return f"http://www.w3.org/ns/odrl/2/{action}"
 
 
+def _ld_value(node):
+    """Unwrap a JSON-LD node to its plain string form.
+
+    ``create_policy`` writes constraint operands as ``{"@id": "..."}`` while
+    ``fetch_policy`` returns them already flattened to strings. Both shapes
+    reach ``evaluate_policy``, so normalise before comparing.
+    """
+    if isinstance(node, dict):
+        return node.get("@id") or node.get("@value") or ""
+    return node if isinstance(node, str) else ""
+
+
 def _normalize_actions(actions):
     """Normalize a single action or list of actions."""
     if isinstance(actions, list):
@@ -301,14 +313,14 @@ def evaluate_policy(
         # Check all constraints
         all_satisfied = True
         for constraint in constraints:
-            left = constraint.get("leftOperand", "")
-            operator = constraint.get("operator", "")
-            right = constraint.get("rightOperand", "")
+            left = _ld_value(constraint.get("leftOperand", ""))
+            operator = _ld_value(constraint.get("operator", ""))
+            right = _ld_value(constraint.get("rightOperand", ""))
 
             if left in ("purpose", "odrl:purpose", "http://www.w3.org/ns/odrl/2/purpose"):
                 if operator in ("eq", "odrl:eq", "http://www.w3.org/ns/odrl/2/eq"):
                     # Compare purpose: short name, DPV URI, or full URI
-                    matches = (
+                    matches = purpose is not None and (
                         purpose == right
                         or f"https://w3id.org/dpv#{purpose}" == right
                         or purpose == right.rsplit("#", 1)[-1]

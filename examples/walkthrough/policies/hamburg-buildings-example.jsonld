@@ -1,0 +1,55 @@
+{
+  "@context": "http://www.w3.org/ns/odrl.jsonld",
+  "@type": "Offer",
+  "uid": "https://fair2adapt.eu/policy/hamburg-buildings-example",
+  "_nanopub_uri": "https://w3id.org/np/RAkCc5ernqtkD4bGumI2wsJOC14-jy1sbYtWwukTL_bgM",
+  "_note": "Published via the Science Live platform on 2026-08-26. Cited here in the https://w3id.org/np/<code> form because that is the one that content-negotiates to RDF; the platform also mints https://w3id.org/sciencelive/np/<code>, which currently returns an HTML view for every RDF media type. Both denote the same nanopublication - the trusty URI artifact code is a hash of the content. Mirrors the production Hamburg policy field-for-field, differing only in the policy and dataset URIs.",
+  "permission": [
+    {
+      "target": "https://fair2adapt.eu/data/hamburg-buildings-example",
+      "action": "use",
+      "constraint": [
+        {
+          "leftOperand": "purpose",
+          "operator": "eq",
+          "rightOperand": {
+            "@id": "https://w3id.org/dpv#AcademicResearch"
+          }
+        }
+      ]
+    },
+    {
+      "target": "https://fair2adapt.eu/data/hamburg-buildings-example",
+      "action": "reproduce",
+      "constraint": [
+        {
+          "leftOperand": "purpose",
+          "operator": "eq",
+          "rightOperand": {
+            "@id": "https://w3id.org/dpv#AcademicResearch"
+          }
+        }
+      ]
+    }
+  ],
+  "prohibition": [
+    {
+      "target": "https://fair2adapt.eu/data/hamburg-buildings-example",
+      "action": "distribute"
+    },
+    {
+      "target": "https://fair2adapt.eu/data/hamburg-buildings-example",
+      "action": "commercialize"
+    }
+  ],
+  "obligation": [
+    {
+      "action": "attribute",
+      "attributedParty": {
+        "@id": "https://fair2adapt-eosc.eu"
+      }
+    }
+  ],
+  "_rohub_ro": "https://w3id.org/ro-id/542c8767-2563-44c1-b9df-be0a56d38a84",
+  "_grant_nanopub_uri": "https://w3id.org/np/RAhUhIjOyF36Pc2gXquYf2JP4QWmrdPLiBrJcwJubIU2U"
+}

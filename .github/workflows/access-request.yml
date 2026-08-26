@@ -105,7 +105,7 @@ jobs:
 
           **Next steps:**
           1. Contact the data provider to request access
-          2. The provider will review your request and publish an ODRL Access Grant via [Nanodash](https://nanodash.knowledgepixels.com/publish?template=https://w3id.org/np/RAeRMv6jOibLPIYBMOGu_FsX6NQ6B59KJCgCFkue4z7Ac)
+          2. The provider will review your request and publish an ODRL Access Grant via [Nanodash](https://nanodash.knowledgepixels.com/publish?template=https://w3id.org/np/RAoLSOhZx_dLX6xnGBN8o1aQSiD8HSrwBshfCjXXSslhE)
           3. Once the grant is published, re-open this issue or create a new one
 
           **Policy:** [${{ steps.evaluate.outputs.policy_nanopub_uri }}](${{ steps.evaluate.outputs.policy_nanopub_uri }})

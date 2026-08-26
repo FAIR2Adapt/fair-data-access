@@ -17,6 +17,10 @@ python = "3.12.*"
 pip = "*"
 # --- demo data handling ---
 pandas = ">=2.0"
+# The demo gates a GeoPackage building layer; py7zr unpacks the ArcGIS .lpkx
+# layer package the Zenodo example data ships as.
+geopandas = ">=1.0"
+py7zr = "*"
 # --- notebook execution + Jupyter Book ---
 jupytext = "*"
 jupyterlab = "*"
