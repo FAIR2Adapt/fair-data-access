@@ -28,17 +28,28 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -e .
-          pip install jupytext pandas
+          # nbconvert is what actually executes the notebooks below. Without it the
+          # smoke test silently degraded to "jupyter: command not found" and the
+          # demo was never run in CI at all.
+          pip install jupytext nbconvert ipykernel pandas geopandas py7zr
 
-      - name: Write private keys from secrets
+      - name: Fetch the example layer (Zenodo 10.5281/zenodo.19860733)
+        run: python3 scripts/fetch_example_data.py
+
+      - name: Write private keys from secrets (mint them if unset)
         working-directory: examples/walkthrough
         env:
           EXAMPLE_CONSUMER_PRIVATE_KEY: ${{ secrets.EXAMPLE_CONSUMER_PRIVATE_KEY }}
           EXAMPLE_PROVIDER_PRIVATE_KEY: ${{ secrets.EXAMPLE_PROVIDER_PRIVATE_KEY }}
         run: |
-          printenv EXAMPLE_CONSUMER_PRIVATE_KEY > keys/example-consumer-private.pem
-          printenv EXAMPLE_PROVIDER_PRIVATE_KEY > keys/example-provider-private.pem
-          chmod 600 keys/*-private.pem
+          if [ -n "$EXAMPLE_CONSUMER_PRIVATE_KEY" ]; then
+            printenv EXAMPLE_CONSUMER_PRIVATE_KEY > keys/example-consumer-private.pem
+            printenv EXAMPLE_PROVIDER_PRIVATE_KEY > keys/example-provider-private.pem
+            chmod 600 keys/*-private.pem
+          else
+            echo "No key secrets set (e.g. a fork); minting a throwaway identity."
+            python3 ../../scripts/generate_example_keys.py
+          fi
 
       - name: Convert .py to .ipynb and execute (smoke test)
         working-directory: examples/walkthrough
@@ -50,6 +61,12 @@ jobs:
               --output-dir=/tmp/executed \
               "${nb}.ipynb"
           done
+          # Assert on the outcome, not just on the exit code: a fail-open provider
+          # would otherwise execute cleanly and pass this job.
+          grep -q "Integrity verified" /tmp/executed/02_consumer.ipynb \
+            || { echo "::error::integrity assertion missing from executed notebook"; exit 1; }
+          grep -q "PERMIT" /tmp/executed/01_provider.ipynb \
+            || { echo "::error::provider did not record a policy decision"; exit 1; }
 
       - name: Build walkthrough site
         working-directory: examples/walkthrough
