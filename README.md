@@ -148,3 +148,15 @@ The ODRL policies (as nanopubs), encrypted data packages, and RO-Crate metadata 
 - [Nanopublications](https://nanopub.net/) -- Decentralized, verifiable scientific assertions
 - [RO-Crate](https://www.researchobject.org/ro-crate/) -- Research Object packaging
 - [FAIR2Adapt](https://fair2adapt.eu/) -- FAIR data for climate adaptation
+
+## Licence
+
+Apache License 2.0 — see [LICENSE](LICENSE).
+
+## Citation
+
+If you use this software, please cite it via [`CITATION.cff`](CITATION.cff), or:
+
+> Fouilloux, A. (2026). *fair-data-access: ODRL-based access control for FAIR Digital
+> Objects with nanopublication policies and encrypted data* (v0.2.0). Zenodo.
+> https://doi.org/10.5281/zenodo.22117251
