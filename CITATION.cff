@@ -25,7 +25,7 @@ identifiers:
     value: "10.5281/zenodo.22117251"
     description: "Concept DOI (resolves to the latest version) — cite the project"
   - type: doi
-    value: "10.5281/zenodo.22117252"
+    value: "10.5281/zenodo.22143762"
     description: "Version DOI for v0.2.1 — pins this exact release; cite this from nanopubs"
 keywords:
   - FAIR Digital Objects
