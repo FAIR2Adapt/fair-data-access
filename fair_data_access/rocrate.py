@@ -5,11 +5,50 @@ metadata files, and provides utilities for loading encrypted inputs
 in the urban_pfr FDO pipeline.
 """
 
+import hashlib
 import json
 from pathlib import Path
 
 from fair_data_access.encrypt import decrypt_file, decrypt_bytes
 from fair_data_access.keys import unwrap_key, load_wrapped_key
+
+RO_CRATE_CONTEXT = "https://w3id.org/ro/crate/1.1/context"
+SCIENCELIVE_TERMS = "https://w3id.org/sciencelive/o/terms/"
+# EU access-right vocabulary, understood by catalogue harvesters without ODRL
+ACCESS_RESTRICTED = "http://publications.europa.eu/resource/authority/access-right/RESTRICTED"
+
+# Terms used by encrypted FDO crates that the RO-Crate context does not define.
+# Without these, JSON-LD processors drop them and the policy is invisible to
+# machines reading the crate as linked data.
+ACCESS_TERMS = {
+    "hasPolicy": {"@id": "http://www.w3.org/ns/odrl/2/hasPolicy", "@type": "@id"},
+    "accessRights": {"@id": "http://purl.org/dc/terms/accessRights", "@type": "@id"},
+    "contentEncryption": {"@id": SCIENCELIVE_TERMS + "contentEncryption"},
+    "algorithm": {"@id": SCIENCELIVE_TERMS + "encryptionAlgorithm"},
+    "keyServer": {"@id": SCIENCELIVE_TERMS + "keyServer", "@type": "@id"},
+}
+# Grants are odrl:Agreement nanopubs, i.e. policies: they are linked with
+# hasPolicy too, and told apart from the offer by their type.
+
+
+def declare_access_terms(crate: dict) -> dict:
+    """Declare the access-control terms in the crate's @context (idempotent)."""
+    context = crate.get("@context", RO_CRATE_CONTEXT)
+    if not isinstance(context, list):
+        context = [context]
+    local = next((c for c in context if isinstance(c, dict)), None)
+    if local is None:
+        local = {}
+        context.append(local)
+    for term, definition in ACCESS_TERMS.items():
+        local.setdefault(term, definition)
+    crate["@context"] = context
+    return crate
+
+
+def did_hash(did: str) -> str:
+    """SHA-256 (hex) of a DID, as used in the key server paths."""
+    return hashlib.sha256(did.encode()).hexdigest()
 
 
 def add_encrypted_file_to_crate(
@@ -22,6 +61,7 @@ def add_encrypted_file_to_crate(
     key_server_url: str,
     distribution_urls: list[dict] | None = None,
     variable_measured: list[dict] | None = None,
+    conditions_of_access: str | None = None,
 ) -> dict:
     """Add an encrypted file entry to an existing RO-Crate metadata file.
 
@@ -38,6 +78,8 @@ def add_encrypted_file_to_crate(
         [{"name": "Zenodo", "contentUrl": "https://..."}, ...]
     variable_measured : I-ADOPT variable references
         [{"@id": "https://w3id.org/np/RA-..."}, ...]
+    conditions_of_access : short human-readable summary of the policy
+        (schema:conditionsOfAccess); the policy nanopub stays authoritative
 
     Returns
     -------
@@ -57,7 +99,10 @@ def add_encrypted_file_to_crate(
             "keyServer": key_server_url,
         },
         "hasPolicy": {"@id": policy_nanopub_uri},
+        "accessRights": {"@id": ACCESS_RESTRICTED},
     }
+    if conditions_of_access:
+        file_entry["conditionsOfAccess"] = conditions_of_access
 
     if distribution_urls:
         file_entry["distribution"] = [
@@ -89,6 +134,7 @@ def add_encrypted_file_to_crate(
             break
 
     crate["@graph"] = graph
+    declare_access_terms(crate)
     crate_path.write_text(json.dumps(crate, indent=2))
     return crate
 
@@ -98,8 +144,15 @@ def load_encrypted_input(
     private_key_pem: bytes,
     key_dir: str | Path | None = None,
     s3_endpoint: str | None = None,
+    requester_did: str | None = None,
+    dataset: str | None = None,
+    key_url: str | None = None,
 ) -> bytes:
     """Load and decrypt an encrypted input file referenced in an RO-Crate.
+
+    The wrapped key is taken from, in order: ``key_url``; ``key_dir``; or the
+    crate's key server, at ``{keyServer}/keys/{sha256(requester_did)}/{dataset}.key``
+    (the path the access-request workflow publishes to).
 
     Parameters
     ----------
@@ -107,6 +160,9 @@ def load_encrypted_input(
     private_key_pem : the requester's DID private key (PEM)
     key_dir : directory containing wrapped key files (from GitHub Pages)
     s3_endpoint : S3 endpoint URL (for Pangeo@EOSC access)
+    requester_did : the requester's DID (needed to find the key on the key server)
+    dataset : dataset name in the policy registry, e.g. "hamburg-buildings"
+    key_url : explicit URL of the wrapped key (e.g. from the access-grant comment)
 
     Returns
     -------
@@ -119,14 +175,22 @@ def load_encrypted_input(
         raise ValueError(f"No contentEncryption metadata for {file_id}")
 
     # Get the wrapped key
-    if key_dir:
-        wrapped = load_wrapped_key(Path(key_dir) / file_id.replace(".enc", ".key"))
-    else:
-        key_server = encryption["keyServer"]
+    if key_url is None and not key_dir:
+        if not (requester_did and dataset):
+            raise ValueError(
+                "To fetch the wrapped key from the key server, pass requester_did "
+                "and dataset (or key_url, or key_dir)"
+            )
+        key_server = encryption["keyServer"].rstrip("/")
+        key_url = f"{key_server}/keys/{did_hash(requester_did)}/{dataset}.key"
+
+    if key_url:
         import httpx
-        response = httpx.get(f"{key_server}/keys/{file_id.replace('.enc', '.key')}")
+        response = httpx.get(key_url, follow_redirects=True)
         response.raise_for_status()
         wrapped = response.content
+    else:
+        wrapped = load_wrapped_key(Path(key_dir) / file_id.replace(".enc", ".key"))
 
     symmetric_key = unwrap_key(wrapped, private_key_pem)
 

@@ -104,7 +104,21 @@ In FDO mode, the pipeline can automatically handle encrypted inputs:
 from fair_data_access import decrypt_file, evaluate_policy, fetch_policy
 from fair_data_access.keys import unwrap_key
 from fair_data_access.rocrate import load_encrypted_input
+
+# crate_entry: the encrypted file's entry in ro-crate-metadata.json
+data = load_encrypted_input(
+    crate_entry,
+    private_key_pem=open("my_private_key.pem", "rb").read(),
+    requester_did="did:web:example.org:me",
+    dataset="hamburg-buildings",  # fetches {keyServer}/keys/{sha256(DID)}/hamburg-buildings.key
+)
 ```
+
+Crates built with `add_encrypted_file_to_crate()` declare their access terms in `@context`
+(`hasPolicy` = `odrl:hasPolicy`, also used for grants, which are `odrl:Agreement` policies;
+`accessRights` = `dct:accessRights` with the EU value `RESTRICTED`; and `contentEncryption`,
+`encryptionAlgorithm`, `keyServer` under `https://w3id.org/sciencelive/o/terms/`, each defined
+by a nanopublication), so the policy link survives JSON-LD processing.
 
 ## Project structure
 

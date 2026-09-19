@@ -152,6 +152,11 @@ def main() -> None:
         policy_nanopub_uri=args.policy_nanopub,
         key_server_url=KEY_SERVER,
         distribution_urls=[{"name": "ROHub", "contentUrl": ENC_NAME}],
+        conditions_of_access=(
+            "Use and reproduction for academic research only; redistribution and "
+            "commercial use prohibited; attribution to FAIR2Adapt required. Access is "
+            "granted per requester under the ODRL policy nanopublication."
+        ),
     )
 
     # The grant is recorded as provenance: the crate points at the decision, it does
@@ -160,7 +165,10 @@ def main() -> None:
         crate = json.loads(crate_path.read_text())
         for entry in crate["@graph"]:
             if entry.get("@id") == ENC_NAME:
-                entry["accessGrant"] = {"@id": args.grant_nanopub}
+                # A grant is an odrl:Agreement, itself a policy: link it with hasPolicy
+                policies = entry["hasPolicy"]
+                policies = policies if isinstance(policies, list) else [policies]
+                entry["hasPolicy"] = policies + [{"@id": args.grant_nanopub}]
         crate["@graph"].append({
             "@id": args.grant_nanopub,
             "@type": "CreativeWork",
@@ -174,7 +182,7 @@ def main() -> None:
     print(f"[crate] {BUILD.relative_to(REPO)}/")
     print(f"[crate]   ro-crate-metadata.json  (hasPolicy -> {args.policy_nanopub})")
     if args.grant_nanopub:
-        print(f"[crate]                           (accessGrant -> {args.grant_nanopub})")
+        print(f"[crate]                           (hasPolicy  -> {args.grant_nanopub}, the grant)")
     print(f"[crate]   {ENC_NAME}  ({(BUILD / ENC_NAME).stat().st_size:,} bytes, ciphertext)")
     if args.key_out:
         Path(args.key_out).write_text(dataset_key.hex())
