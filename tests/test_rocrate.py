@@ -55,6 +55,7 @@ def test_policy_link_is_linked_data(tmp_path):
     assert (s, dct.accessRights, rdflib.URIRef(rocrate.ACCESS_RESTRICTED)) in g
     enc = next(g.objects(s, rdflib.URIRef(rocrate.SCIENCELIVE_TERMS + "contentEncryption")))
     assert (enc, rdflib.URIRef(rocrate.SCIENCELIVE_TERMS + "keyServer"), rdflib.URIRef(KEY_SERVER)) in g
+    assert (enc, rdflib.URIRef(rocrate.SCIENCELIVE_TERMS + "encryptionAlgorithm"), rdflib.Literal("AES-256-GCM")) in g
 
 
 def test_load_encrypted_input_fetches_key_at_workflow_path(tmp_path, monkeypatch):

@@ -115,9 +115,10 @@ data = load_encrypted_input(
 ```
 
 Crates built with `add_encrypted_file_to_crate()` declare their access terms in `@context`
-(`hasPolicy` = `odrl:hasPolicy`, `accessRights` = `dct:accessRights` with the EU value
-`RESTRICTED`, and `contentEncryption`, `keyServer`, `accessGrant` under
-`https://w3id.org/sciencelive/o/terms/`), so the policy link survives JSON-LD processing.
+(`hasPolicy` = `odrl:hasPolicy`, also used for grants, which are `odrl:Agreement` policies;
+`accessRights` = `dct:accessRights` with the EU value `RESTRICTED`; and `contentEncryption`,
+`encryptionAlgorithm`, `keyServer` under `https://w3id.org/sciencelive/o/terms/`, each defined
+by a nanopublication), so the policy link survives JSON-LD processing.
 
 ## Project structure
 

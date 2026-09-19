@@ -24,9 +24,11 @@ ACCESS_TERMS = {
     "hasPolicy": {"@id": "http://www.w3.org/ns/odrl/2/hasPolicy", "@type": "@id"},
     "accessRights": {"@id": "http://purl.org/dc/terms/accessRights", "@type": "@id"},
     "contentEncryption": {"@id": SCIENCELIVE_TERMS + "contentEncryption"},
+    "algorithm": {"@id": SCIENCELIVE_TERMS + "encryptionAlgorithm"},
     "keyServer": {"@id": SCIENCELIVE_TERMS + "keyServer", "@type": "@id"},
-    "accessGrant": {"@id": SCIENCELIVE_TERMS + "accessGrant", "@type": "@id"},
 }
+# Grants are odrl:Agreement nanopubs, i.e. policies: they are linked with
+# hasPolicy too, and told apart from the offer by their type.
 
 
 def declare_access_terms(crate: dict) -> dict:
