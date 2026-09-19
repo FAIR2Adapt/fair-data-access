@@ -152,6 +152,11 @@ def main() -> None:
         policy_nanopub_uri=args.policy_nanopub,
         key_server_url=KEY_SERVER,
         distribution_urls=[{"name": "ROHub", "contentUrl": ENC_NAME}],
+        conditions_of_access=(
+            "Use and reproduction for academic research only; redistribution and "
+            "commercial use prohibited; attribution to FAIR2Adapt required. Access is "
+            "granted per requester under the ODRL policy nanopublication."
+        ),
     )
 
     # The grant is recorded as provenance: the crate points at the decision, it does

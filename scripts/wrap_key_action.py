@@ -6,6 +6,7 @@ import os
 import sys
 
 from fair_data_access.keys import wrap_key, save_wrapped_key
+from fair_data_access.rocrate import did_hash
 
 
 def main():
@@ -35,8 +36,8 @@ def main():
     wrapped = wrap_key(dataset_key, recipient_pubkey_pem)
 
     # Save wrapped key
-    did_hash = _sha256(args.did)
-    output_path = f"docs/keys/{did_hash}/{args.dataset}.key"
+    # Same hash as the reader (rocrate.load_encrypted_input), so paths cannot drift
+    output_path = f"docs/keys/{did_hash(args.did)}/{args.dataset}.key"
     save_wrapped_key(wrapped, output_path)
 
     output_file = os.environ.get("GITHUB_OUTPUT", "/dev/stdout")
@@ -44,11 +45,6 @@ def main():
         f.write(f"wrapped_key_path={output_path}\n")
 
     print(f"Wrapped key saved to: {output_path}")
-
-
-def _sha256(text: str) -> str:
-    import hashlib
-    return hashlib.sha256(text.encode()).hexdigest()
 
 
 if __name__ == "__main__":
