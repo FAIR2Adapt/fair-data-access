@@ -22,3 +22,6 @@ results/
 # Example layer fetched from Zenodo 10.5281/zenodo.19860733 by
 # scripts/fetch_example_data.py -- derived, not vendored.
 examples/walkthrough/data/hamburg-buildings-example.gpkg
+
+# The paper and its planning notes are kept locally, not tracked
+paper/

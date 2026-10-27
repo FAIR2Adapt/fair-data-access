@@ -80,6 +80,9 @@ def main():
 
 
 def _set_output(name: str, value: str):
+    # Outputs are line-based: collapse newlines so a value (e.g. an exception
+    # message) cannot inject extra outputs such as decision=permit.
+    value = " ".join(str(value).splitlines())
     output_file = os.environ.get("GITHUB_OUTPUT", "/dev/stdout")
     with open(output_file, "a") as f:
         f.write(f"{name}={value}\n")

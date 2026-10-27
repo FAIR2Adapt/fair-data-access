@@ -1,16 +1,86 @@
 name: Process Data Access Request
 
+# Security notes:
+# - Issue content is untrusted. It reaches scripts only through env variables,
+#   never through ${{ }} interpolation inside `run:`.
+# - The `evaluate` job has read-only permissions and no secrets.
+# - Only the `grant` job, which runs on a fresh checkout after a permit
+#   decision, receives the dataset key and write access.
+# - The `deny` job answers every other outcome, including a failed `evaluate`.
+
 on:
   issues:
     types: [opened, labeled]
+
+permissions: {}
 
 jobs:
   evaluate:
     if: contains(github.event.issue.labels.*.name, 'access-request')
     runs-on: ubuntu-latest
     permissions:
-      issues: write
+      contents: read
+    outputs:
+      dataset: ${{ steps.parse.outputs.dataset }}
+      did: ${{ steps.parse.outputs.did }}
+      dataset_secret_name: ${{ steps.parse.outputs.dataset_secret_name }}
+      public_key_pem_b64: ${{ steps.resolve.outputs.public_key_pem_b64 }}
+      decision: ${{ steps.evaluate.outputs.decision || 'deny' }}
+      reason: ${{ steps.evaluate.outputs.reason || steps.parse.outputs.reason || 'The request could not be processed (for example, the DID could not be resolved)' }}
+      policy_nanopub_uri: ${{ steps.evaluate.outputs.policy_nanopub_uri }}
+      grant_nanopub_uri: ${{ steps.evaluate.outputs.grant_nanopub_uri }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install dependencies
+        run: pip install -e .
+
+      - name: Parse and validate access request
+        id: parse
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: python scripts/parse_request.py
+
+      - name: Resolve DID and get public key
+        id: resolve
+        if: steps.parse.outputs.valid == 'true'
+        env:
+          REQUEST_DID: ${{ steps.parse.outputs.did }}
+        run: python scripts/resolve_did_action.py "$REQUEST_DID"
+
+      - name: Verify ODRL Access Grant
+        id: evaluate
+        if: steps.parse.outputs.valid == 'true'
+        env:
+          REQUEST_DATASET: ${{ steps.parse.outputs.dataset }}
+          REQUEST_DID: ${{ steps.parse.outputs.did }}
+          REQUEST_PURPOSE: ${{ steps.parse.outputs.purpose }}
+        run: |
+          python scripts/evaluate_policy_action.py \
+            --dataset "$REQUEST_DATASET" \
+            --did "$REQUEST_DID" \
+            --purpose "$REQUEST_PURPOSE"
+
+  grant:
+    needs: evaluate
+    if: needs.evaluate.outputs.decision == 'permit'
+    runs-on: ubuntu-latest
+    permissions:
       contents: write
+      issues: write
+    env:
+      REQUEST_DATASET: ${{ needs.evaluate.outputs.dataset }}
+      REQUEST_DID: ${{ needs.evaluate.outputs.did }}
+      POLICY_NANOPUB_URI: ${{ needs.evaluate.outputs.policy_nanopub_uri }}
+      GRANT_NANOPUB_URI: ${{ needs.evaluate.outputs.grant_nanopub_uri }}
+      ISSUE_NUMBER: ${{ github.event.issue.number }}
 
     steps:
       - uses: actions/checkout@v4
@@ -22,95 +92,92 @@ jobs:
       - name: Install dependencies
         run: pip install -e .
 
-      - name: Parse access request
-        id: parse
-        run: python scripts/parse_request.py "${{ github.event.issue.body }}"
-
-      - name: Resolve DID and get public key
-        id: resolve
-        run: python scripts/resolve_did_action.py ${{ steps.parse.outputs.did }}
-
-      - name: Verify ODRL Access Grant
-        id: evaluate
-        run: |
-          python scripts/evaluate_policy_action.py \
-            --dataset "${{ steps.parse.outputs.dataset }}" \
-            --did "${{ steps.parse.outputs.did }}" \
-            --purpose "${{ steps.parse.outputs.purpose }}"
-
-      - name: Wrap key and publish
-        if: steps.evaluate.outputs.decision == 'permit'
+      - name: Wrap key
         id: wrap
+        env:
+          DATASET_KEY: ${{ secrets[format('KEY_{0}', needs.evaluate.outputs.dataset_secret_name)] }}
+          PUBLIC_KEY_PEM_B64: ${{ needs.evaluate.outputs.public_key_pem_b64 }}
         run: |
           python scripts/wrap_key_action.py \
-            --dataset "${{ steps.parse.outputs.dataset }}" \
-            --did "${{ steps.parse.outputs.did }}" \
-            --public-key-pem "${{ steps.resolve.outputs.public_key_pem_b64 }}"
-        env:
-          DATASET_KEY: ${{ secrets[format('KEY_{0}', steps.parse.outputs.dataset_secret_name)] }}
+            --dataset "$REQUEST_DATASET" \
+            --did "$REQUEST_DID" \
+            --public-key-pem "$PUBLIC_KEY_PEM_B64"
 
       - name: Deploy wrapped key to GitHub Pages
-        if: steps.evaluate.outputs.decision == 'permit'
+        env:
+          WRAPPED_KEY_PATH: ${{ steps.wrap.outputs.wrapped_key_path }}
         run: |
           # The wrapped key is already at the right path from wrap_key_action.py
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -f "${{ steps.wrap.outputs.wrapped_key_path }}"
-          git commit -m "Grant access: ${{ steps.parse.outputs.dataset }} → ${{ steps.parse.outputs.did }}"
+          git add -f "$WRAPPED_KEY_PATH"
+          git commit -m "Grant access: $REQUEST_DATASET → $REQUEST_DID"
           git push
 
       - name: Comment on issue (approved)
-        if: steps.evaluate.outputs.decision == 'permit'
         run: |
-          DID_HASH=$(echo -n "${{ steps.parse.outputs.did }}" | sha256sum | cut -d' ' -f1)
-          DATASET="${{ steps.parse.outputs.dataset }}"
+          DID_HASH=$(echo -n "$REQUEST_DID" | sha256sum | cut -d' ' -f1)
           PAGES_URL="https://fair2adapt.github.io/fair-data-access"
 
-          gh issue comment ${{ github.event.issue.number }} --body "$(cat <<EOF
+          gh issue comment "$ISSUE_NUMBER" --body "$(cat <<EOF
           ## Access Granted
 
-          A valid [ODRL Access Grant for FAIR Data](${{ steps.evaluate.outputs.grant_nanopub_uri }}) was found and verified:
+          A valid [ODRL Access Grant for FAIR Data](${GRANT_NANOPUB_URI}) was found and verified:
           - **Signature:** valid
           - **Authorized by:** policy publisher (creator match verified)
 
           **Wrapped key URL:**
-          \`${PAGES_URL}/keys/${DID_HASH}/${DATASET}.key\`
+          \`${PAGES_URL}/keys/${DID_HASH}/${REQUEST_DATASET}.key\`
 
           **How to decrypt:**
           \`\`\`bash
-          curl -o wrapped_key.json "${PAGES_URL}/keys/${DID_HASH}/${DATASET}.key"
+          curl -o wrapped_key.json "${PAGES_URL}/keys/${DID_HASH}/${REQUEST_DATASET}.key"
 
-          fair-data-access decrypt ${DATASET}.gpkg.enc \\
+          fair-data-access decrypt ${REQUEST_DATASET}.gpkg.enc \\
             --wrapped-key wrapped_key.json \\
             --private-key your_private_key.pem
           \`\`\`
 
-          **Policy:** [${{ steps.evaluate.outputs.policy_nanopub_uri }}](${{ steps.evaluate.outputs.policy_nanopub_uri }})
-          **Grant:** [${{ steps.evaluate.outputs.grant_nanopub_uri }}](${{ steps.evaluate.outputs.grant_nanopub_uri }})
+          **Policy:** [${POLICY_NANOPUB_URI}](${POLICY_NANOPUB_URI})
+          **Grant:** [${GRANT_NANOPUB_URI}](${GRANT_NANOPUB_URI})
           EOF
           )"
-          gh issue close ${{ github.event.issue.number }} --reason completed
+          gh issue close "$ISSUE_NUMBER" --reason completed
         env:
           GH_TOKEN: ${{ github.token }}
 
+  deny:
+    needs: evaluate
+    # Also runs when `evaluate` failed (e.g. DID resolution error), so the
+    # requester always gets an answer; never when it was skipped (no label).
+    if: >-
+      !cancelled()
+      && (needs.evaluate.result == 'success' || needs.evaluate.result == 'failure')
+      && needs.evaluate.outputs.decision != 'permit'
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+    steps:
       - name: Comment on issue (denied)
-        if: steps.evaluate.outputs.decision == 'deny'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REASON: ${{ needs.evaluate.outputs.reason }}
+          POLICY_NANOPUB_URI: ${{ needs.evaluate.outputs.policy_nanopub_uri }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
-          gh issue comment ${{ github.event.issue.number }} --body "$(cat <<EOF
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "$(cat <<EOF
           ## Access Denied
 
           No valid ODRL Access Grant for FAIR Data was found for your request.
 
-          **Reason:** ${{ steps.evaluate.outputs.reason }}
+          **Reason:** ${REASON}
 
           **Next steps:**
           1. Contact the data provider to request access
           2. The provider will review your request and publish an ODRL Access Grant via [Nanodash](https://nanodash.knowledgepixels.com/publish?template=https://w3id.org/np/RAoLSOhZx_dLX6xnGBN8o1aQSiD8HSrwBshfCjXXSslhE)
           3. Once the grant is published, re-open this issue or create a new one
 
-          **Policy:** [${{ steps.evaluate.outputs.policy_nanopub_uri }}](${{ steps.evaluate.outputs.policy_nanopub_uri }})
+          **Policy:** [${POLICY_NANOPUB_URI}](${POLICY_NANOPUB_URI})
           EOF
           )"
-          gh issue close ${{ github.event.issue.number }} --reason "not planned"
-        env:
-          GH_TOKEN: ${{ github.token }}
+          gh issue close "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --reason "not planned"
