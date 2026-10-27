@@ -6,6 +6,7 @@ name: Process Data Access Request
 # - The `evaluate` job has read-only permissions and no secrets.
 # - Only the `grant` job, which runs on a fresh checkout after a permit
 #   decision, receives the dataset key and write access.
+# - The `deny` job answers every other outcome, including a failed `evaluate`.
 
 on:
   issues:
@@ -25,7 +26,7 @@ jobs:
       dataset_secret_name: ${{ steps.parse.outputs.dataset_secret_name }}
       public_key_pem_b64: ${{ steps.resolve.outputs.public_key_pem_b64 }}
       decision: ${{ steps.evaluate.outputs.decision || 'deny' }}
-      reason: ${{ steps.evaluate.outputs.reason || steps.parse.outputs.reason }}
+      reason: ${{ steps.evaluate.outputs.reason || steps.parse.outputs.reason || 'The request could not be processed (for example, the DID could not be resolved)' }}
       policy_nanopub_uri: ${{ steps.evaluate.outputs.policy_nanopub_uri }}
       grant_nanopub_uri: ${{ steps.evaluate.outputs.grant_nanopub_uri }}
 
@@ -147,7 +148,12 @@ jobs:
 
   deny:
     needs: evaluate
-    if: needs.evaluate.outputs.decision == 'deny'
+    # Also runs when `evaluate` failed (e.g. DID resolution error), so the
+    # requester always gets an answer; never when it was skipped (no label).
+    if: >-
+      !cancelled()
+      && (needs.evaluate.result == 'success' || needs.evaluate.result == 'failure')
+      && needs.evaluate.outputs.decision != 'permit'
     runs-on: ubuntu-latest
     permissions:
       issues: write
