@@ -1,15 +1,20 @@
 """ODRL Access Grant verification for FAIR Data.
 
 Verifies that a valid ODRL Access Grant for FAIR Data nanopub exists
-for a requester + dataset, and that it was published by the same
-identity that published the corresponding ODRL Access Policy for FAIR Data.
+for a requester + dataset, and that it was signed with the same key
+as the corresponding ODRL Access Policy for FAIR Data.
+
+The SPARQL index is only used to find candidate grants. Every decision is
+taken on the signed nanopublications themselves: a valid signature proves a
+record is intact, and comparing signing keys proves who issued it. The
+self-declared dct:creator is reported but never trusted.
 """
 
 import tempfile
 from pathlib import Path
 
 import httpx
-from rdflib import Dataset, Namespace, URIRef
+from rdflib import RDF, Dataset, Namespace, URIRef
 
 ODRL = Namespace("http://www.w3.org/ns/odrl/2/")
 NP = Namespace("http://www.nanopub.org/nschema#")
@@ -79,15 +84,9 @@ def find_grants(dataset_uri: str, requester_did: str = None) -> list[dict]:
         OPTIONAL {{ ?grant odrl:assignee ?assignee . }}
         OPTIONAL {{ ?grant fair:underPolicy ?policy . }}
       }}
-      graph ?pubinfo {{
-        ?np dct:creator ?creator .
-      }}
-      FILTER NOT EXISTS {{
-        graph ?retractHead {{
-          ?retractNp np:hasAssertion ?retractAssertion .
-        }}
-        graph ?retractAssertion {{
-          ?someone npx:retracts ?np .
+      OPTIONAL {{
+        graph ?pubinfo {{
+          ?np dct:creator ?creator .
         }}
       }}
     }}
@@ -106,7 +105,7 @@ def find_grants(dataset_uri: str, requester_did: str = None) -> list[dict]:
     for binding in response.json().get("results", {}).get("bindings", []):
         results.append({
             "nanopub_uri": binding["np"]["value"],
-            "creator": binding["creator"]["value"],
+            "creator": binding.get("creator", {}).get("value"),
             "assignee": binding.get("assignee", {}).get("value"),
             "policy": binding.get("policy", {}).get("value"),
         })
@@ -148,6 +147,11 @@ def fetch_nanopub(nanopub_uri: str) -> tuple[Dataset, URIRef]:
     fetched: a nanopub served under one namespace may identify itself under another,
     in which case constructing graph names from the request URL finds nothing.
     """
+    return parse_nanopub(fetch_nanopub_trig(nanopub_uri), nanopub_uri)
+
+
+def fetch_nanopub_trig(nanopub_uri: str) -> str:
+    """Fetch a nanopub as TriG text through its canonical URL."""
     response = httpx.get(
         canonical_nanopub_url(nanopub_uri),
         headers={"Accept": "application/trig"},
@@ -166,9 +170,13 @@ def fetch_nanopub(nanopub_uri: str) -> tuple[Dataset, URIRef]:
             "Some vanity namespaces serve an HTML application shell; try the "
             f"https://w3id.org/np/{artifact_code(nanopub_uri)} form."
         )
+    return response.text
 
+
+def parse_nanopub(trig: str, nanopub_uri: str = "") -> tuple[Dataset, URIRef]:
+    """Parse nanopub TriG and return (dataset, its own identifier)."""
     ds = Dataset()
-    ds.parse(data=response.text, format="trig")
+    ds.parse(data=trig, format="trig")
 
     for graph in ds.graphs():
         for subj in graph.subjects(NP.hasPublicationInfo, None):
@@ -196,23 +204,104 @@ def verify_nanopub_signature(nanopub_uri: str) -> bool:
     Downloads the nanopub and uses the nanopub library to check
     that the signature matches the content and public key.
     """
+    return signature_is_valid(fetch_nanopub_trig(nanopub_uri))
+
+
+def signature_is_valid(trig: str) -> bool:
+    """Check that a nanopub's signature matches its content and embedded key.
+
+    This proves the record is intact, not who signed it: compare the
+    signing key (signing_public_key) to establish that.
+    """
     from nanopub import Nanopub
 
+    with tempfile.TemporaryDirectory() as tmpdir:
+        tmp = Path(tmpdir) / "np.trig"
+        tmp.write_text(trig)
+        return Nanopub(rdf=tmp).has_valid_signature
+
+
+def signing_public_key(ds: Dataset) -> str:
+    """The public key a nanopub was signed with (npx:hasPublicKey), whitespace-free."""
+    for graph in ds.graphs():
+        if not str(graph.identifier).rstrip("/").endswith("pubinfo"):
+            continue
+        for key in graph.objects(None, NPX.hasPublicKey):
+            return "".join(str(key).split())
+    raise ValueError("No npx:hasPublicKey found in nanopub")
+
+
+def grant_matches(
+    ds: Dataset, dataset_uri: str, assignees: set[str], policy_nanopub_uri: str
+) -> bool:
+    """True if the signed grant assertion names this dataset, assignee and policy.
+
+    Read from the fetched nanopub itself, not from the SPARQL index, which
+    is a third-party copy.
+    """
+    for graph in ds.graphs():
+        if not str(graph.identifier).rstrip("/").endswith("assertion"):
+            continue
+        for grant in graph.subjects(RDF.type, ODRL.Agreement):
+            targets = {str(o) for o in graph.objects(grant, ODRL.target)}
+            grant_assignees = {str(o) for o in graph.objects(grant, ODRL.assignee)}
+            policies = [str(o) for o in graph.objects(grant, FAIR.underPolicy)]
+            if (
+                dataset_uri in targets
+                and grant_assignees & assignees
+                and any(same_nanopub(p, policy_nanopub_uri) for p in policies)
+            ):
+                return True
+    return False
+
+
+def find_retractions(nanopub_uri: str) -> list[str]:
+    """URIs of nanopubs that claim to retract the given nanopub (unverified)."""
+    targets = " ".join(
+        f"<{uri}>" for uri in {nanopub_uri, canonical_nanopub_url(nanopub_uri)}
+    )
+    query = f"""
+    PREFIX np: <http://www.nanopub.org/nschema#>
+    PREFIX npx: <http://purl.org/nanopub/x/>
+
+    SELECT DISTINCT ?retractNp WHERE {{
+      VALUES ?target {{ {targets} }}
+      graph ?retractHead {{
+        ?retractNp np:hasAssertion ?retractAssertion .
+      }}
+      graph ?retractAssertion {{
+        ?someone npx:retracts ?target .
+      }}
+    }}
+    """
     response = httpx.get(
-        canonical_nanopub_url(nanopub_uri),
-        headers={"Accept": "application/trig"},
+        SPARQL_ENDPOINT,
+        params={"query": query},
+        headers={"Accept": "application/json"},
         follow_redirects=True,
         timeout=60,
     )
     response.raise_for_status()
+    return [
+        b["retractNp"]["value"]
+        for b in response.json().get("results", {}).get("bindings", [])
+    ]
 
-    tmp = Path(tempfile.mktemp(suffix=".trig"))
-    try:
-        tmp.write_text(response.text)
-        np_obj = Nanopub(rdf=tmp)
-        return np_obj.has_valid_signature
-    finally:
-        tmp.unlink()
+
+def is_retracted_by_key(nanopub_uri: str, public_key: str) -> bool:
+    """True if a validly signed retraction made with public_key exists.
+
+    Anyone can publish a retraction; only one signed with the issuer's key counts.
+    """
+    for retraction_uri in find_retractions(nanopub_uri):
+        try:
+            trig = fetch_nanopub_trig(retraction_uri)
+            ds, _ = parse_nanopub(trig, retraction_uri)
+            if signing_public_key(ds) == public_key and signature_is_valid(trig):
+                return True
+        except Exception as e:
+            print(f"    Ignoring unverifiable retraction {retraction_uri}: {e}")
+    return False
 
 
 def verify_access(
@@ -223,11 +312,13 @@ def verify_access(
     """Verify that a requester has been granted access to a dataset.
 
     Checks:
-    1. A valid ODRL Access Grant for FAIR Data nanopub exists for this
-       requester + dataset
-    2. The grant nanopub has a valid cryptographic signature
-    3. The grant was published by the SAME identity that published the
-       ODRL Access Policy for FAIR Data (only the data provider can authorize)
+    1. The policy nanopub has a valid signature; its signing key is the
+       issuer key for this dataset
+    2. A grant nanopub exists whose signed assertion names this dataset,
+       this requester and this policy (fair:underPolicy)
+    3. The grant has a valid signature, made with the SAME key as the policy
+       (only the data provider can authorize)
+    4. The grant has not been retracted by a retraction signed with that key
 
     Parameters
     ----------
@@ -252,17 +343,25 @@ def verify_access(
         "grant_creator": None,
     }
 
-    # Step 1: Get the policy creator
-    print(f"Checking policy creator: {policy_nanopub_uri}")
+    # Step 1: Get the policy's signing key
+    print(f"Checking policy: {policy_nanopub_uri}")
     try:
-        policy_creator = get_nanopub_creator(policy_nanopub_uri)
-        result["policy_creator"] = policy_creator
-        print(f"  Policy creator: {policy_creator}")
+        policy_trig = fetch_nanopub_trig(policy_nanopub_uri)
+        policy_ds, policy_np = parse_nanopub(policy_trig, policy_nanopub_uri)
+        if not signature_is_valid(policy_trig):
+            result["reason"] = "Policy nanopub has an invalid signature"
+            return result
+        issuer_key = signing_public_key(policy_ds)
+        result["policy_creator"] = next(
+            (str(c) for g in policy_ds.graphs() for c in g.objects(policy_np, DCT.creator)),
+            None,
+        )
+        print(f"  Policy creator: {result['policy_creator']}")
     except Exception as e:
         result["reason"] = f"Cannot fetch policy nanopub: {e}"
         return result
 
-    # Step 2: Search for grants
+    # Step 2: Search for candidate grants
     print(f"Searching for grants: dataset={dataset_uri}, requester={requester_did}")
     grants = find_grants(dataset_uri, requester_did)
 
@@ -270,40 +369,51 @@ def verify_access(
         result["reason"] = "No ODRL Access Grant for FAIR Data found for this requester and dataset"
         return result
 
-    print(f"  Found {len(grants)} grant(s)")
+    print(f"  Found {len(grants)} candidate grant(s)")
+    assignees = {requester_did, _did_to_url(requester_did)}
 
-    # Step 3: Check each grant
+    # Step 3: Check each grant on its signed content
     for grant in grants:
         grant_uri = grant["nanopub_uri"]
-        grant_creator = grant["creator"]
         result["grant_nanopub"] = grant_uri
-        result["grant_creator"] = grant_creator
-
+        result["grant_creator"] = grant["creator"]
         print(f"  Checking grant: {grant_uri}")
-        print(f"    Grant creator: {grant_creator}")
 
-        # Check creator match
-        if grant_creator != policy_creator:
-            print(f"    REJECTED: grant creator does not match policy creator")
+        try:
+            grant_trig = fetch_nanopub_trig(grant_uri)
+            grant_ds, _ = parse_nanopub(grant_trig, grant_uri)
+        except Exception as e:
+            print(f"    REJECTED: cannot fetch grant: {e}")
             continue
 
-        # Step 4: Verify signature
-        print(f"    Verifying signature...")
+        if not grant_matches(grant_ds, dataset_uri, assignees, policy_nanopub_uri):
+            print("    REJECTED: grant does not name this dataset, requester and policy")
+            continue
+
         try:
-            sig_valid = verify_nanopub_signature(grant_uri)
+            grant_key = signing_public_key(grant_ds)
+            sig_valid = signature_is_valid(grant_trig)
         except Exception as e:
-            print(f"    Signature verification failed: {e}")
+            print(f"    REJECTED: signature verification failed: {e}")
             continue
 
         if not sig_valid:
-            print(f"    REJECTED: invalid signature")
+            print("    REJECTED: invalid signature")
             continue
 
-        print(f"    VALID: signature verified, creator authorized")
+        if grant_key != issuer_key:
+            print("    REJECTED: grant not signed with the policy publisher's key")
+            continue
+
+        if is_retracted_by_key(grant_uri, issuer_key):
+            print("    REJECTED: grant retracted by its issuer")
+            continue
+
+        print("    VALID: signature verified, signed with the policy publisher's key")
         result["granted"] = True
-        result["reason"] = "Valid grant found: signature verified, creator matches policy publisher"
+        result["reason"] = "Valid grant found: signature verified, signed with the policy publisher's key"
         return result
 
     # No valid grant found
-    result["reason"] = "Grant(s) found but none are valid (creator mismatch or bad signature)"
+    result["reason"] = "Grant(s) found but none are valid (wrong policy, wrong key, bad signature or retracted)"
     return result

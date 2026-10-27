@@ -2,7 +2,7 @@
 
 Checks that the data provider has published a valid ODRL Access Grant
 for FAIR Data nanopub for this requester + dataset, with verified
-signature and creator match against the policy publisher.
+signature and signing key match against the policy publisher.
 
 Flow:
 1. Requester opens a GitHub Issue requesting access
