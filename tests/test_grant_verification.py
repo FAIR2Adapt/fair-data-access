@@ -132,6 +132,24 @@ def test_retraction_by_someone_else_is_ignored(network):
     assert g.verify_access(DATASET, DID, POLICY)["granted"]
 
 
+def test_retracted_policy_authorizes_nothing(network):
+    store, retractions = network
+    store[GRANT] = _grant()
+    store["https://w3id.org/np/RAretract"] = _nanopub("https://w3id.org/np/RAretract", PROVIDER_KEY)
+    retractions[POLICY] = ["https://w3id.org/np/RAretract"]
+    result = g.verify_access(DATASET, DID, POLICY)
+    assert not result["granted"]
+    assert "retracted" in result["reason"]
+
+
+def test_policy_retraction_by_someone_else_is_ignored(network):
+    store, retractions = network
+    store[GRANT] = _grant()
+    store["https://w3id.org/np/RAretract"] = _nanopub("https://w3id.org/np/RAretract", ATTACKER_KEY)
+    retractions[POLICY] = ["https://w3id.org/np/RAretract"]
+    assert g.verify_access(DATASET, DID, POLICY)["granted"]
+
+
 def _policy(*constraints):
     return {"permission": [{"action": "use", "constraint": list(constraints)}]}
 

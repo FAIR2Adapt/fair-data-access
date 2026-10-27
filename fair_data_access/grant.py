@@ -300,7 +300,8 @@ def verify_access(
 
     Checks:
     1. The policy nanopub has a valid signature; its signing key is the
-       issuer key for this dataset
+       issuer key for this dataset. A policy retracted with that key
+       authorizes nothing
     2. A grant nanopub exists whose signed assertion names this dataset,
        this requester and this policy (fair:underPolicy)
     3. The grant has a valid signature, made with the SAME key as the policy
@@ -346,6 +347,11 @@ def verify_access(
         print(f"  Policy creator: {result['policy_creator']}")
     except Exception as e:
         result["reason"] = f"Cannot fetch policy nanopub: {e}"
+        return result
+
+    # A policy its issuer has retracted no longer authorizes any grant
+    if is_retracted_by_key(policy_nanopub_uri, issuer_key):
+        result["reason"] = "Policy nanopub has been retracted by its issuer"
         return result
 
     # Step 2: Search for candidate grants
