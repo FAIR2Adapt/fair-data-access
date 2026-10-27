@@ -19,7 +19,7 @@ ATTACKER_KEY = "ATTACKERKEY"
 ORCID = "https://orcid.org/0000-0002-1784-2920"
 
 
-def _nanopub(uri, key, assertion=""):
+def _nanopub(uri, key, assertion="", algorithm="RSA", extra_pubinfo=""):
     return f"""
 @prefix np: <http://www.nanopub.org/nschema#> .
 @prefix npx: <http://purl.org/nanopub/x/> .
@@ -37,17 +37,19 @@ def _nanopub(uri, key, assertion=""):
 <{uri}/provenance> {{ }}
 <{uri}/pubinfo> {{
   <{uri}> dct:creator <{ORCID}> .
-  <{uri}/sig> npx:hasPublicKey "{key}" ; npx:signedBy <{ORCID}> .
+  {extra_pubinfo}
+  <{uri}/sig> npx:hasSignatureTarget <{uri}> ; npx:hasAlgorithm "{algorithm}" ;
+    npx:hasPublicKey "{key}" ; npx:signedBy <{ORCID}> .
 }}
 """
 
 
-def _grant(uri=GRANT, key=PROVIDER_KEY, policy=POLICY, assignee=DID):
-    return _nanopub(uri, key, f"""
+def _grant(uri=GRANT, key=PROVIDER_KEY, policy=POLICY, assignee=DID, **kwargs):
+    return _nanopub(uri, key, assertion=f"""
   <{uri}/grant> a odrl:Agreement ;
     odrl:target <{DATASET}> ;
     odrl:assignee <{assignee}> ;
-    fair:underPolicy <{policy}> .""")
+    fair:underPolicy <{policy}> .""", **kwargs)
 
 
 @pytest.fixture
@@ -77,6 +79,23 @@ def test_grant_claiming_provider_orcid_but_other_key_is_rejected(network):
     store[GRANT] = _grant(key=ATTACKER_KEY)  # same dct:creator, different key
     result = g.verify_access(DATASET, DID, POLICY)
     assert not result["granted"]
+
+
+def test_decoy_provider_key_in_pubinfo_is_ignored(network):
+    store, _ = network
+    # Signed with the attacker's key, plus a stray triple naming the provider's key
+    store[GRANT] = _grant(
+        key=ATTACKER_KEY,
+        extra_pubinfo=f'<{GRANT}/decoy> npx:hasPublicKey "{PROVIDER_KEY}" .',
+    )
+    assert not g.verify_access(DATASET, DID, POLICY)["granted"]
+
+
+def test_dsa_signature_is_rejected(network):
+    # The nanopub library reports DSA signatures valid without checking them
+    store, _ = network
+    store[GRANT] = _grant(algorithm="DSA")
+    assert not g.verify_access(DATASET, DID, POLICY)["granted"]
 
 
 def test_grant_under_another_policy_is_rejected(network):

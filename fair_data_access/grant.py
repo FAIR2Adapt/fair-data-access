@@ -140,16 +140,6 @@ def same_nanopub(a: str | None, b: str | None) -> bool:
     return artifact_code(a) == artifact_code(b)
 
 
-def fetch_nanopub(nanopub_uri: str) -> tuple[Dataset, URIRef]:
-    """Fetch a nanopub and return (dataset, its own identifier).
-
-    The identifier is read from the RDF rather than assumed to equal the URL we
-    fetched: a nanopub served under one namespace may identify itself under another,
-    in which case constructing graph names from the request URL finds nothing.
-    """
-    return parse_nanopub(fetch_nanopub_trig(nanopub_uri), nanopub_uri)
-
-
 def fetch_nanopub_trig(nanopub_uri: str) -> str:
     """Fetch a nanopub as TriG text through its canonical URL."""
     response = httpx.get(
@@ -174,7 +164,12 @@ def fetch_nanopub_trig(nanopub_uri: str) -> str:
 
 
 def parse_nanopub(trig: str, nanopub_uri: str = "") -> tuple[Dataset, URIRef]:
-    """Parse nanopub TriG and return (dataset, its own identifier)."""
+    """Parse nanopub TriG and return (dataset, its own identifier).
+
+    The identifier is read from the RDF rather than assumed to equal the URL we
+    fetched: a nanopub served under one namespace may identify itself under another,
+    in which case constructing graph names from the request URL finds nothing.
+    """
     ds = Dataset()
     ds.parse(data=trig, format="trig")
 
@@ -183,28 +178,6 @@ def parse_nanopub(trig: str, nanopub_uri: str = "") -> tuple[Dataset, URIRef]:
             return ds, URIRef(str(subj))
 
     raise ValueError(f"No np:hasPublicationInfo found in {nanopub_uri}")
-
-
-def get_nanopub_creator(nanopub_uri: str) -> str:
-    """Get the dct:creator of a nanopub, whichever namespace it is served under."""
-    ds, np_uri = fetch_nanopub(nanopub_uri)
-
-    for graph in ds.graphs():
-        if not str(graph.identifier).rstrip("/").endswith("pubinfo"):
-            continue
-        for creator in graph.objects(np_uri, DCT.creator):
-            return str(creator)
-
-    raise ValueError(f"No creator found in nanopub {nanopub_uri}")
-
-
-def verify_nanopub_signature(nanopub_uri: str) -> bool:
-    """Verify the cryptographic signature of a nanopub.
-
-    Downloads the nanopub and uses the nanopub library to check
-    that the signature matches the content and public key.
-    """
-    return signature_is_valid(fetch_nanopub_trig(nanopub_uri))
 
 
 def signature_is_valid(trig: str) -> bool:
@@ -221,14 +194,28 @@ def signature_is_valid(trig: str) -> bool:
         return Nanopub(rdf=tmp).has_valid_signature
 
 
-def signing_public_key(ds: Dataset) -> str:
-    """The public key a nanopub was signed with (npx:hasPublicKey), whitespace-free."""
-    for graph in ds.graphs():
-        if not str(graph.identifier).rstrip("/").endswith("pubinfo"):
-            continue
-        for key in graph.objects(None, NPX.hasPublicKey):
-            return "".join(str(key).split())
-    raise ValueError("No npx:hasPublicKey found in nanopub")
+def signing_public_key(ds: Dataset, np_uri: URIRef) -> str:
+    """The public key np_uri was signed with, whitespace-free.
+
+    Read from the signature node (npx:hasSignatureTarget np_uri), the same
+    node the nanopub library verifies against. Any other npx:hasPublicKey in
+    pubinfo is ignored: a signer can add one naming someone else's key.
+    """
+    sig_nodes = {s for s, _, _, _ in ds.quads((None, NPX.hasSignatureTarget, np_uri, None))}
+    if len(sig_nodes) != 1:
+        raise ValueError(f"Expected one signature for {np_uri}, found {len(sig_nodes)}")
+    sig = sig_nodes.pop()
+
+    # The nanopub library skips verification for DSA and reports it valid,
+    # so accept only the algorithm it actually checks.
+    algorithms = {str(o).upper() for _, _, o, _ in ds.quads((sig, NPX.hasAlgorithm, None, None))}
+    if algorithms != {"RSA"}:
+        raise ValueError(f"Unsupported signature algorithm {sorted(algorithms)} for {np_uri}")
+
+    keys = {"".join(str(o).split()) for _, _, o, _ in ds.quads((sig, NPX.hasPublicKey, None, None))}
+    if len(keys) != 1:
+        raise ValueError(f"Expected one public key on the signature of {np_uri}, found {len(keys)}")
+    return keys.pop()
 
 
 def grant_matches(
@@ -296,8 +283,8 @@ def is_retracted_by_key(nanopub_uri: str, public_key: str) -> bool:
     for retraction_uri in find_retractions(nanopub_uri):
         try:
             trig = fetch_nanopub_trig(retraction_uri)
-            ds, _ = parse_nanopub(trig, retraction_uri)
-            if signing_public_key(ds) == public_key and signature_is_valid(trig):
+            ds, np_uri = parse_nanopub(trig, retraction_uri)
+            if signing_public_key(ds, np_uri) == public_key and signature_is_valid(trig):
                 return True
         except Exception as e:
             print(f"    Ignoring unverifiable retraction {retraction_uri}: {e}")
@@ -351,7 +338,7 @@ def verify_access(
         if not signature_is_valid(policy_trig):
             result["reason"] = "Policy nanopub has an invalid signature"
             return result
-        issuer_key = signing_public_key(policy_ds)
+        issuer_key = signing_public_key(policy_ds, policy_np)
         result["policy_creator"] = next(
             (str(c) for g in policy_ds.graphs() for c in g.objects(policy_np, DCT.creator)),
             None,
@@ -381,7 +368,7 @@ def verify_access(
 
         try:
             grant_trig = fetch_nanopub_trig(grant_uri)
-            grant_ds, _ = parse_nanopub(grant_trig, grant_uri)
+            grant_ds, grant_np = parse_nanopub(grant_trig, grant_uri)
         except Exception as e:
             print(f"    REJECTED: cannot fetch grant: {e}")
             continue
@@ -391,7 +378,7 @@ def verify_access(
             continue
 
         try:
-            grant_key = signing_public_key(grant_ds)
+            grant_key = signing_public_key(grant_ds, grant_np)
             sig_valid = signature_is_valid(grant_trig)
         except Exception as e:
             print(f"    REJECTED: signature verification failed: {e}")
