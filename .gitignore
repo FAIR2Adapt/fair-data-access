@@ -25,3 +25,7 @@ examples/walkthrough/data/hamburg-buildings-example.gpkg
 
 # The paper and its planning notes are kept locally, not tracked
 paper/
+
+# Local Claude Code files, never committed
+CLAUDE.md
+claude-resume.txt
