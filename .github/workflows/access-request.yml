@@ -124,7 +124,7 @@ jobs:
 
           A valid [ODRL Access Grant for FAIR Data](${GRANT_NANOPUB_URI}) was found and verified:
           - **Signature:** valid
-          - **Authorized by:** policy publisher (creator match verified)
+          - **Authorized by:** policy publisher (signed with the same key as the policy)
 
           **Wrapped key URL:**
           \`${PAGES_URL}/keys/${DID_HASH}/${REQUEST_DATASET}.key\`

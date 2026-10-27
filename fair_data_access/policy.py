@@ -310,31 +310,37 @@ def evaluate_policy(
             # No constraints = unconditionally permitted
             return True
 
-        # Check all constraints
-        all_satisfied = True
-        for constraint in constraints:
-            left = _ld_value(constraint.get("leftOperand", ""))
-            operator = _ld_value(constraint.get("operator", ""))
-            right = _ld_value(constraint.get("rightOperand", ""))
-
-            if left in ("purpose", "odrl:purpose", "http://www.w3.org/ns/odrl/2/purpose"):
-                if operator in ("eq", "odrl:eq", "http://www.w3.org/ns/odrl/2/eq"):
-                    # Compare purpose: short name, DPV URI, or full URI
-                    matches = purpose is not None and (
-                        purpose == right
-                        or f"https://w3id.org/dpv#{purpose}" == right
-                        or purpose == right.rsplit("#", 1)[-1]
-                    )
-                    if not matches:
-                        all_satisfied = False
-                        break
-            elif context and left in context:
-                if operator in ("eq", "odrl:eq"):
-                    if context[left] != right:
-                        all_satisfied = False
-                        break
-
-        if all_satisfied:
+        # Check all constraints. Fail closed: a constraint this evaluator
+        # does not understand (unknown leftOperand or operator) is treated as
+        # NOT satisfied, so an unsupported condition can never grant access.
+        if all(_constraint_satisfied(c, purpose, context) for c in constraints):
             return True
+
+    return False
+
+
+_EQ = ("eq", "odrl:eq", "http://www.w3.org/ns/odrl/2/eq")
+_PURPOSE = ("purpose", "odrl:purpose", "http://www.w3.org/ns/odrl/2/purpose")
+
+
+def _constraint_satisfied(constraint: dict, purpose: str | None, context: dict | None) -> bool:
+    """Evaluate one constraint; anything unsupported evaluates to False."""
+    left = _ld_value(constraint.get("leftOperand", ""))
+    operator = _ld_value(constraint.get("operator", ""))
+    right = _ld_value(constraint.get("rightOperand", ""))
+
+    if operator not in _EQ:
+        return False
+
+    if left in _PURPOSE:
+        # Compare purpose: short name, DPV URI, or full URI
+        return purpose is not None and (
+            purpose == right
+            or f"https://w3id.org/dpv#{purpose}" == right
+            or purpose == right.rsplit("#", 1)[-1]
+        )
+
+    if context and left in context:
+        return context[left] == right
 
     return False

@@ -177,7 +177,7 @@ Nanodash requires HTTP(S) URIs for the assignee field. Convert `did:web:myuniver
 
 After publishing the grant, add the `access-request` label to the researcher's GitHub Issue. The workflow will:
 
-1. **Verify** the grant nanopub (signature + creator match against policy)
+1. **Verify** the grant nanopub (signature + same signing key as the policy)
 2. **Wrap** the dataset key with the requester's public key
 3. **Deploy** the wrapped key to GitHub Pages
 4. **Comment** on the issue with the download URL

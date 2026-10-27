@@ -1,4 +1,13 @@
 {
+  "_readme": [
+    "Input for create_odrl_policy_nanopub.ipynb, not a record of what is published.",
+    "The policies last generated from this file (RAJr0en7, RA7ulL1q, RAX98xyu) were",
+    "retracted with disapprove_nanopub.ipynb and authorize nothing.",
+    "",
+    "The live hamburg-buildings policy is https://w3id.org/np/RAir7keZs8Jy7i8HvRI7X4SmefJtY3jG2WgyFlsZa9-iw,",
+    "published separately and signed with a different key. See nanopubs/PUBLISHED.md and",
+    "policies/registry.json. Grants must be signed with the same key as the policy they cite."
+  ],
   "metadata": {
     "creator_orcid": "0000-0002-1784-2920",
     "creator_name": "Anne Fouilloux",

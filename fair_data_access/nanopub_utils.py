@@ -116,6 +116,9 @@ def create_access_grant_rdf(
     grant = URIRef("http://purl.org/nanopub/temp/grant")
     assertion.add((grant, RDF.type, ODRL.Agreement))
     assertion.add((grant, ODRL.target, URIRef(dataset_uri)))
+    # ODRL requires an Agreement to name both parties: the data provider
+    # granting access (assigner) and the requester receiving it (assignee).
+    assertion.add((grant, ODRL.assigner, URIRef(author_orcid)))
     assertion.add((grant, ODRL.assignee, URIRef(requester_did)))
     for action in actions:
         assertion.add((grant, ODRL.action, ODRL[action]))

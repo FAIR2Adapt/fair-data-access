@@ -27,8 +27,8 @@ Grant: `odrl:Agreement` granting `use` and `reproduce` to
 `https://fair2adapt.github.io/fair-data-access/example-consumer/did.json`, under the policy
 above, generated 2026-08-26T19:10:58Z.
 
-Verified end-to-end against the live nanopub network: signature valid, grant creator matches the
-policy publisher, and an unauthorised DID is refused.
+Verified end-to-end against the live nanopub network: signature valid, grant signed with the same
+key as the policy, and an unauthorised DID is refused.
 
 ## Hamburg deployment (real, protected data)
 
